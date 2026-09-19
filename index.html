@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lane Auto Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Lane Auto Shop</h1>
+      <p class="rules">Shop with 6 gold, put one unit in each of 3 lanes, End Turn — win 2 lane fights. Win 2 rounds before 2 losses.</p>
+    </header>
+
+    <section id="hud" class="hud">
+      <span id="gold">Gold: 6</span>
+      <span id="round">Round 1</span>
+      <span id="record">W0 – L0</span>
+    </section>
+
+    <section id="shop-screen" class="screen">
+      <h2>Shop</h2>
+      <div id="offers" class="offers"></div>
+      <div class="shop-actions">
+        <button type="button" id="btn-roll">Roll (1g)</button>
+        <button type="button" id="btn-end" class="primary">End Turn → Fight</button>
+      </div>
+      <p class="hint">Tap an offer to buy (3g), then tap an empty lane. Freeze one offer to keep it on roll.</p>
+    </section>
+
+    <section id="board-wrap" class="board-wrap">
+      <h2>Your lanes</h2>
+      <div id="board" class="board"></div>
+      <h2>Enemy</h2>
+      <div id="enemy" class="board enemy"></div>
+    </section>
+
+    <section id="log-wrap" class="log-wrap">
+      <h2>Combat log</h2>
+      <div id="log" class="log"></div>
+    </section>
+
+    <section id="end-screen" class="screen hidden">
+      <h2 id="end-title"></h2>
+      <p id="end-detail"></p>
+      <button type="button" id="btn-rematch" class="primary">New run</button>
+    </section>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
