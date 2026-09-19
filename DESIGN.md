@@ -2,7 +2,7 @@
 
 Short MUST / MUST NOT for bots and humans. No full GDD.
 
-Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 2 wins before 2 losses, 8 roles with Start / Hurt / Faint.
+Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses, 8 roles with Start / Hurt / Faint. Wall Hurt splashes. Shop marks copies.
 
 ## 1) R1 AI shop — always fill 3
 
@@ -23,7 +23,7 @@ Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/la
 
 ## 2) Cheap depth — after 1-1-1 feels fair
 
-Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service ship with this contract. Hurt splash does **not** ship yet.
+Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall Hurt splash ship with this contract.
 
 **A. Partner slot**
 - **MUST** — Start buffs the **other unit in this lane** (self only if solo). Medic Faint heals the **partner**; Scout Faint heals an **adjacent lane**.
@@ -33,9 +33,18 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service ship w
 - **MUST** — 0g swap during shop. Hurt only fires on the fighting front.
 - **MUST NOT** — Charge gold for swap. Don’t auto-sort by ATK/HP.
 
-**C. Cross-lane Hurt (later)**
-- **MUST** — Hurt deals 1 to the enemy front **and** 1 to one adjacent enemy front.
-- **MUST NOT** — Splash to the player’s own lanes. Don’t add a 4th lane.
+**C. Cross-lane Hurt (Wall only)**
+- **MUST** — Wall Hurt deals 1 to the attacker **and** 1 to one adjacent enemy front. Pick the adjacent living enemy front with more HP; ties go to the lower lane index. Veteran Wall still splashes (`id` stays wall). Splash kills faint in that lane.
+- **MUST** — Bruiser and Skirmisher Hurt stay attacker-only.
+- **MUST NOT** — Splash the player’s own lanes. Don’t splash from every Hurt unit.
+
+**Run length**
+- **MUST** — First to **3** wins before **3** losses. Round still won on 2 of 3 lanes. Gold stays 9/10/11/12.
+- **MUST NOT** — Leftover gold, interest, or extra gold on triggers.
+
+**Shop copy tell**
+- **MUST** — If a shop offer’s role is already on the player board, mark it **Copy**. Information only.
+- **MUST NOT** — Bias rolls toward copies. Don’t pity-timer a matching unit.
 
 **MUST NOT (until A–C ship)** food, shop tiers, items, a bench, extra gold on triggers, or a 9th role.
 
@@ -61,6 +70,6 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service ship w
 - Named-pet evolutions, or pair-fusion of two different roles into a new unit.
 - Persist leftover gold or add interest. Gold already scales by round (9/10/11/12).
 - Let combine delete coverage: fuse is same-lane only; the Veteran still occupies the lane. An empty *other* lane is a player mistake, not a fuse side-effect.
-- Raise cap to 3, add Hurt splash, or add animation in this step.
+- Raise cap to 3 or add animation in this step.
 
 R1 coverage stays sacred: a Veteran is a **slot** spike (then fill the partner), not a license to 2-1-0.

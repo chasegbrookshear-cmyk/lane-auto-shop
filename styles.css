@@ -25,6 +25,7 @@ h2 { margin: 14px 0 8px; font-size: 0.95rem; color: var(--muted); text-transform
 }
 .offer.selected, .offer.frozen { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(91,156,255,0.35); }
 .offer.frozen { border-style: dashed; }
+.offer.copy { border-color: var(--accent); }
 .offer .name, .unit .name { font-weight: 800; display: block; }
 .offer .meta, .unit .meta { color: var(--muted); font-size: 0.8rem; }
 .shop-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
