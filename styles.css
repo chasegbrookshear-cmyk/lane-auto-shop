@@ -1,4 +1,3 @@
-
 :root {
   --bg: #0e1218; --panel: #1a2330; --ink: #e8eef6; --muted: #93a0b4;
   --accent: #5b9cff; --good: #3ecf8e; --bad: #ff6b7a; --lane: #243044;
@@ -42,6 +41,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .lane.drop { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); cursor: pointer; }
 .lane .tag { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+.lane .tag .swap {
+  display: inline; width: auto; margin: 0 0 0 8px; padding: 2px 8px;
+  font-size: 0.65rem; letter-spacing: 0.08em; background: transparent;
+  border: 1px solid #3b4a63; border-radius: 8px;
+}
 .stack { display: grid; gap: 6px; }
 .unit.front { border-color: var(--good); }
 .spend-wrap {
