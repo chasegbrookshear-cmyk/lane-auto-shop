@@ -2,7 +2,7 @@
 
 Short MUST / MUST NOT for bots and humans. No full GDD.
 
-Current rules: 9g shop, 3g units, roll 1g, sell = full refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 2 wins before 2 losses, 8 roles with Start / Hurt / Faint.
+Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 2 wins before 2 losses, 8 roles with Start / Hurt / Faint.
 
 ## 1) R1 AI shop — always fill 3
 
@@ -23,7 +23,7 @@ Current rules: 9g shop, 3g units, roll 1g, sell = full refund, max 2 units/lane,
 
 ## 2) Cheap depth — after 1-1-1 feels fair
 
-Cap=2 is a HP bag if Start buffs self. Partner + swap ship with this contract. Hurt splash does **not** ship yet.
+Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service ship with this contract. Hurt splash does **not** ship yet.
 
 **A. Partner slot**
 - **MUST** — Start buffs the **other unit in this lane** (self only if solo). Medic Faint heals the **partner**; Scout Faint heals an **adjacent lane**.
@@ -39,15 +39,19 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap ship with this contract. H
 
 **MUST NOT (until A–C ship)** food, shop tiers, items, a bench, extra gold on triggers, or a 9th role.
 
-## 3) Combine / level later — not SAP 3-copy
+## 3) Combine / Veteran — shipping, not SAP 3-copy
 
 **MUST**
-- Fuse **2 copies in the same lane** into a Veteran in **one slot**.
-- Cap Veteran at **one** step.
-- Veteran = `+1/+2` **or** trigger fires twice — pick one.
-- Alternate: a unit that **survives a won lane** gains `+1 ATK` next shop.
-- Optional **Service** — pay 3g on a placed unit for `+1/+1`.
-- Combine/Service happen **on the lane**. Keep 3g flat prices.
+- Fuse **2 copies of the same role in the same lane** into a Veteran occupying **one slot**. 0g. Shop only.
+- Veteran = **+1 ATK / +2 HP** (and maxHp). One step. Trigger still fires once.
+- Fuse keeps the **front** unit’s current stats (including Service), then applies the Veteran bonus. The back copy is removed. No gold refund — the refund is the **freed slot**.
+- If either unit is already a Veteran, fuse **fails**.
+- Different roles in a lane cannot fuse.
+- **Service** — pay 3g on a placed unit for `+1/+1` (atk, hp, maxHp). Repeatable. Shop only.
+- Sell always refunds **3g**, even on Veterans and Serviced units. Service gold and the fused body are spent.
+- Persist: between rounds, heal HP to maxHp. **Keep** atk, maxHp, veteran flag, and name. Never rebuild from the roster template.
+- Combine / Service happen **on the lane**. Unit shop price stays flat 3g.
+- AI this build: cover-first bodies. Do **not** auto-fuse (fusing after a full buy throws away a body with no refill). Same fuse rule if a later shop sim would still occupy 3 lanes after.
 
 **MUST NOT**
 - 3 copies anywhere → L2, then 3 L2s → L3.
@@ -55,6 +59,8 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap ship with this contract. H
 - Food that gives stats and freezes.
 - Make a Veteran occupy 1 slot **and** count as 2 bodies for empty-lane math.
 - Named-pet evolutions, or pair-fusion of two different roles into a new unit.
-- Let combine delete coverage: if a fuse would empty a lane, it fails or the leftover unit must be placeable this shop.
+- Persist leftover gold or add interest. Gold already scales by round (9/10/11/12).
+- Let combine delete coverage: fuse is same-lane only; the Veteran still occupies the lane. An empty *other* lane is a player mistake, not a fuse side-effect.
+- Raise cap to 3, add Hurt splash, or add animation in this step.
 
-R1 coverage stays sacred: a Veteran is a **power** spike, not a license to 2-1-0.
+R1 coverage stays sacred: a Veteran is a **slot** spike (then fill the partner), not a license to 2-1-0.

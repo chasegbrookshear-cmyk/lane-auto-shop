@@ -4,6 +4,10 @@
 
 R1 AI always covers **1-1-1**. Start buffs the partner (self if solo). Medic faints into the partner; Scout faints into an adjacent lane. Front/back swap is free.
 
+**Veteran:** two copies of the same role in one lane fuse (0g) into a Veteran (+1/+2, one slot, one step). The freed slot is the composition play.
+
+**Service:** pay 3g on a placed unit for +1/+1. Sell still refunds 3g.
+
 Design contract for bots: [DESIGN.md](./DESIGN.md)
 
 ## Play
