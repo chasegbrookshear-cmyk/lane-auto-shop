@@ -7,7 +7,7 @@
     { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
     { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +1 HP partner in this lane" },
     { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
-    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
+    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
   ];
 
   const BUY = 3;
@@ -159,13 +159,16 @@
         btn.className =
           "offer" +
           (selectedOffer === i ? " selected" : "") +
-          (freezeIdx === i ? " frozen" : "");
+          (freezeIdx === i ? " frozen" : "") +
+          (isCopyOffer(u, state.lanes) ? " copy" : "");
         btn.innerHTML =
           '<span class="name">' +
           u.name +
           " · " +
           BUY +
-          "g</span><span class=\"meta\">" +
+          "g" +
+          (isCopyOffer(u, state.lanes) ? " · COPY" : "") +
+          "</span><span class=\"meta\">" +
           u.atk +
           "/" +
           u.hp +
@@ -527,6 +530,71 @@
     return stack.find((u) => u.hp > 0) || null;
   }
 
+  function pickSplashTarget(fromLane, enemy) {
+    const cands = [];
+    const adj = [fromLane - 1, fromLane + 1];
+    for (let k = 0; k < adj.length; k++) {
+      const j = adj[k];
+      if (j < 0 || j >= 3) continue;
+      const f = front(enemy[j]);
+      if (f) cands.push({ lane: j, unit: f });
+    }
+    if (!cands.length) return null;
+    cands.sort(function (a, b) {
+      return b.unit.hp - a.unit.hp || a.lane - b.lane;
+    });
+    return cands[0];
+  }
+
+  function isCopyOffer(offer, lanes) {
+    return lanes.some(function (lane) {
+      return lane.some(function (u) {
+        return u.id === offer.id;
+      });
+    });
+  }
+
+  function applyHurt(hurter, hurterSide, laneIdx, attacker, boards, faintUnit) {
+    if (!hurter || hurter.trigger !== "hurt" || hurter.hp <= 0) return;
+    attacker.hp -= 1;
+    log(
+      "Lane " +
+        (laneIdx + 1) +
+        ": " +
+        hurter.name +
+        " Hurt → 1 to " +
+        attacker.name +
+        " (" +
+        Math.max(0, attacker.hp) +
+        " HP)."
+    );
+    if (hurter.id !== "wall") return;
+    const enemyBoard = hurterSide === "you" ? boards.enemy : boards.you;
+    const splashSide = hurterSide === "you" ? "enemy" : "you";
+    const prefix = hurterSide === "you" ? "" : "enemy ";
+    const hit = pickSplashTarget(laneIdx, enemyBoard);
+    if (!hit) {
+      log("Lane " + (laneIdx + 1) + ": " + prefix + hurter.name + " Hurt — no adjacent enemy.");
+      return;
+    }
+    hit.unit.hp -= 1;
+    log(
+      "Lane " +
+        (laneIdx + 1) +
+        ": " +
+        prefix +
+        hurter.name +
+        " Hurt splash → Lane " +
+        (hit.lane + 1) +
+        " " +
+        hit.unit.name +
+        " (" +
+        Math.max(0, hit.unit.hp) +
+        " HP)."
+    );
+    if (hit.unit.hp <= 0) faintUnit(splashSide, hit.unit, hit.lane);
+  }
+
   function resolveCombat(youSnap, enemySnap) {
     const boards = {
       you: youSnap.map((s) => s.map((u) => ({ ...u }))),
@@ -539,6 +607,16 @@
     }
 
     let guard = 80;
+    const fainted = [];
+    function faintUnit(side, unit, laneIdx) {
+      if (unit.hp > 0 || fainted.indexOf(unit) >= 0) return;
+      fainted.push(unit);
+      const prefix = side === "you" ? "" : "enemy ";
+      log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " faints.");
+      applyFaint(side, laneIdx, unit, boards);
+      const nxt = front(side === "you" ? boards.you[laneIdx] : boards.enemy[laneIdx]);
+      if (nxt) log("Lane " + (laneIdx + 1) + ": " + prefix + nxt.name + " steps up.");
+    }
     while (guard-- > 0) {
       let any = false;
       for (let i = 0; i < 3; i++) {
@@ -561,33 +639,10 @@
             Math.max(0, b.hp) +
             " HP."
         );
-        if (b.hp > 0 && b.trigger === "hurt") {
-          a.hp -= 1;
-          log(
-            "Lane " +
-              (i + 1) +
-              ": " +
-              b.name +
-              " Hurt → 1 to " +
-              a.name +
-              " (" +
-              Math.max(0, a.hp) +
-              " HP)."
-          );
-        }
-        if (b.hp <= 0) {
-          log("Lane " + (i + 1) + ": " + b.name + " faints.");
-          applyFaint("enemy", i, b, boards);
-          const next = front(boards.enemy[i]);
-          if (next) log("Lane " + (i + 1) + ": enemy " + next.name + " steps up.");
-        }
-        if (a.hp <= 0) {
-          log("Lane " + (i + 1) + ": " + a.name + " faints.");
-          applyFaint("you", i, a, boards);
-          const next = front(boards.you[i]);
-          if (next) log("Lane " + (i + 1) + ": " + next.name + " steps up.");
-          continue;
-        }
+        if (b.hp > 0) applyHurt(b, "enemy", i, a, boards, faintUnit);
+        faintUnit("enemy", b, i);
+        faintUnit("you", a, i);
+        if (a.hp <= 0) continue;
         if (b.hp <= 0) continue;
 
         a.hp -= b.atk;
@@ -604,32 +659,9 @@
             Math.max(0, a.hp) +
             " HP."
         );
-        if (a.hp > 0 && a.trigger === "hurt") {
-          b.hp -= 1;
-          log(
-            "Lane " +
-              (i + 1) +
-              ": " +
-              a.name +
-              " Hurt → 1 to " +
-              b.name +
-              " (" +
-              Math.max(0, b.hp) +
-              " HP)."
-          );
-        }
-        if (a.hp <= 0) {
-          log("Lane " + (i + 1) + ": " + a.name + " faints.");
-          applyFaint("you", i, a, boards);
-          const next = front(boards.you[i]);
-          if (next) log("Lane " + (i + 1) + ": " + next.name + " steps up.");
-        }
-        if (b.hp <= 0) {
-          log("Lane " + (i + 1) + ": " + b.name + " faints.");
-          applyFaint("enemy", i, b, boards);
-          const next = front(boards.enemy[i]);
-          if (next) log("Lane " + (i + 1) + ": enemy " + next.name + " steps up.");
-        }
+        if (a.hp > 0) applyHurt(a, "you", i, b, boards, faintUnit);
+        faintUnit("you", a, i);
+        faintUnit("enemy", b, i);
       }
       if (!any) break;
     }
@@ -767,11 +799,11 @@
 
   function afterReveal() {
     el.spendWrap.classList.add("hidden");
-    if (state.wins >= 2) {
+    if (state.wins >= 3) {
       showEnd(true, "You won the run " + state.wins + "–" + state.losses + ".");
       return;
     }
-    if (state.losses >= 2) {
+    if (state.losses >= 3) {
       showEnd(false, "Run over " + state.wins + "–" + state.losses + ".");
       return;
     }
