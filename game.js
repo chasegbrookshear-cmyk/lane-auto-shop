@@ -300,41 +300,41 @@
   }
 
   function buildEnemy() {
-    // Mirror player spend roughly: fill with 2–3 buys worth, stack preference
+    // Spend like a shop: fill every empty lane first, then stack leftovers.
     const enemy = emptyLanes();
     let budget = START_GOLD + Math.min(2, state.round - 1) * 3;
     const picks = [];
     while (budget >= BUY && picks.length < 6) {
-      picks.push(randomUnit());
+      const u = randomUnit();
+      if (state.round >= 2 && Math.random() < 0.35) u.hp += 1;
+      if (state.round >= 3 && Math.random() < 0.35) u.atk += 1;
+      picks.push(u);
       budget -= BUY;
-      if (state.round >= 2 && Math.random() < 0.35) {
-        picks[picks.length - 1].hp += 1;
-      }
-      if (state.round >= 3 && Math.random() < 0.35) {
-        picks[picks.length - 1].atk += 1;
-      }
     }
-    // Prefer stacking into 1–2 lanes so spend map is visible
-    const focus = Math.random() < 0.55 ? [0, 0, 1, 1, 2] : [0, 1, 2, 0, 1, 2];
-    let fi = 0;
-    for (const u of picks) {
-      let placed = false;
-      for (let tries = 0; tries < 6 && !placed; tries++) {
-        const lane = focus[fi % focus.length];
-        fi++;
-        if (enemy[lane].length < CAP) {
-          enemy[lane].push(u);
-          placed = true;
+    // 1) Spread: one unit per empty lane while picks remain
+    for (let lane = 0; lane < 3 && picks.length; lane++) {
+      if (enemy[lane].length === 0) enemy[lane].push(picks.shift());
+    }
+    // 2) Stack leftovers — still never skip an empty lane if any open slot exists
+    while (picks.length) {
+      const u = picks.shift();
+      let lane = -1;
+      // Prefer empty lanes first (safety)
+      for (let i = 0; i < 3; i++) {
+        if (enemy[i].length === 0 && enemy[i].length < CAP) {
+          lane = i;
+          break;
         }
       }
-      if (!placed) {
-        for (let lane = 0; lane < 3; lane++) {
-          if (enemy[lane].length < CAP) {
-            enemy[lane].push(u);
-            break;
-          }
-        }
+      if (lane < 0) {
+        // Then lanes under cap, mild stack bias after board is covered
+        const open = [0, 1, 2].filter((i) => enemy[i].length < CAP);
+        if (!open.length) break;
+        open.sort((a, b) => enemy[a].length - enemy[b].length);
+        lane = open[0];
+        if (open.length > 1 && Math.random() < 0.45) lane = open[Math.floor(Math.random() * open.length)];
       }
+      enemy[lane].push(u);
     }
     return enemy;
   }
