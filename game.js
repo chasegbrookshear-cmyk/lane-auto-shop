@@ -1,13 +1,13 @@
 (() => {
   const UNITS = [
-    { id: "guard", name: "Guard", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK same lane" },
-    { id: "skirmisher", name: "Skirmisher", atk: 3, hp: 3, trigger: "hurt", text: "Hurt: deal 1 to enemy" },
-    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +1 ATK same lane" },
-    { id: "scout", name: "Scout", atk: 2, hp: 3, trigger: "faint", text: "Faint: +1 HP adjacent ally" },
-    { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to enemy" },
-    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", text: "Faint: +1 HP adjacent ally" },
-    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +1 ATK same lane" },
-    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: deal 1 to enemy" },
+    { id: "guard", name: "Guard", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Skirmisher", atk: 3, hp: 3, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
+    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "scout", name: "Scout", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
+    { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
+    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +1 HP partner in this lane" },
+    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
   ];
 
   const BUY = 3;
@@ -61,6 +61,7 @@
       hp: t.hp,
       maxHp: t.hp,
       trigger: t.trigger,
+      faintAim: t.faintAim,
       text: t.text,
     };
   }
@@ -74,6 +75,7 @@
       hp: t.hp,
       maxHp: t.hp,
       trigger: t.trigger,
+      faintAim: t.faintAim,
       text: t.text,
     };
   }
@@ -197,6 +199,9 @@
       stack.length +
       "/" +
       CAP +
+      (mine && state.phase === "shop" && stack.length === 2
+        ? ' <button type="button" class="swap" data-swap="' + i + '">Swap</button>'
+        : "") +
       "</div>";
     const wrap = document.createElement("div");
     wrap.className = "stack";
@@ -237,6 +242,13 @@
       });
     }
     div.appendChild(wrap);
+    const swapBtn = div.querySelector("[data-swap]");
+    if (swapBtn) {
+      swapBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        swapLane(i);
+      });
+    }
     if (canDrop) div.addEventListener("click", () => onLaneClick(i));
     return div;
   }
@@ -290,6 +302,15 @@
     render();
   }
 
+  function swapLane(lane) {
+    if (state.phase !== "shop") return;
+    const stack = state.lanes[lane];
+    if (!stack || stack.length < 2) return;
+    state.lanes[lane] = [stack[1], stack[0]];
+    log("Lane " + (lane + 1) + ": swapped front/back.");
+    render();
+  }
+
   function doRoll() {
     if (state.phase !== "shop" || state.gold < ROLL) return;
     state.gold -= ROLL;
@@ -300,34 +321,32 @@
   }
 
   function buildEnemy() {
-    // Spend like a shop: fill every empty lane first, then stack leftovers.
+    // R1 MUST: 3 buys, 1-1-1 cover, no rolls, no stat hacks, no sniping.
     const enemy = emptyLanes();
     let budget = START_GOLD + Math.min(2, state.round - 1) * 3;
     const picks = [];
-    while (budget >= BUY && picks.length < 6) {
+    const maxBuys = state.round === 1 ? 3 : Math.min(6, Math.floor(budget / BUY));
+    while (budget >= BUY && picks.length < maxBuys) {
       const u = randomUnit();
       if (state.round >= 2 && Math.random() < 0.35) u.hp += 1;
       if (state.round >= 3 && Math.random() < 0.35) u.atk += 1;
       picks.push(u);
       budget -= BUY;
     }
-    // 1) Spread: one unit per empty lane while picks remain
     for (let lane = 0; lane < 3 && picks.length; lane++) {
       if (enemy[lane].length === 0) enemy[lane].push(picks.shift());
     }
-    // 2) Stack leftovers — still never skip an empty lane if any open slot exists
+    if (state.round === 1) return enemy;
     while (picks.length) {
       const u = picks.shift();
       let lane = -1;
-      // Prefer empty lanes first (safety)
       for (let i = 0; i < 3; i++) {
-        if (enemy[i].length === 0 && enemy[i].length < CAP) {
+        if (enemy[i].length === 0) {
           lane = i;
           break;
         }
       }
       if (lane < 0) {
-        // Then lanes under cap, mild stack bias after board is covered
         const open = [0, 1, 2].filter((i) => enemy[i].length < CAP);
         if (!open.length) break;
         open.sort((a, b) => enemy[a].length - enemy[b].length);
@@ -346,32 +365,38 @@
   function applyFaint(side, laneIdx, unit, boards) {
     if (!unit || unit.trigger !== "faint") return;
     const board = side === "you" ? boards.you : boards.enemy;
-    const adj = [laneIdx - 1, laneIdx + 1].filter(
-      (j) => j >= 0 && j < 3 && board[j].some((u) => u.hp > 0)
-    );
-    if (!adj.length) {
-      log(
-        "Lane " +
-          (laneIdx + 1) +
-          ": " +
-          (side === "you" ? "" : "enemy ") +
-          unit.name +
-          " Faint — no adjacent ally."
+    const prefix = side === "you" ? "" : "enemy ";
+    const aim = unit.faintAim || "adjacent";
+    let ally = null;
+    let allyLane = laneIdx;
+    if (aim === "partner") {
+      ally = board[laneIdx].find((o) => o !== unit && o.hp > 0) || null;
+      if (!ally) {
+        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no partner.");
+        return;
+      }
+    } else {
+      const adj = [laneIdx - 1, laneIdx + 1].filter(
+        (j) => j >= 0 && j < 3 && board[j].some((u) => u.hp > 0)
       );
-      return;
+      if (!adj.length) {
+        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no adjacent ally.");
+        return;
+      }
+      allyLane = adj[0];
+      ally = board[allyLane].find((u) => u.hp > 0);
+      if (!ally) return;
     }
-    const j = adj[0];
-    const ally = board[j].find((u) => u.hp > 0);
-    if (!ally) return;
     ally.hp += 1;
+    const where = aim === "partner" ? "partner" : "Lane " + (allyLane + 1);
     log(
       "Lane " +
         (laneIdx + 1) +
         ": " +
-        (side === "you" ? "" : "enemy ") +
+        prefix +
         unit.name +
-        " Faint → +1 HP to Lane " +
-        (j + 1) +
+        " Faint → +1 HP " +
+        where +
         " " +
         ally.name +
         " (" +
@@ -379,6 +404,40 @@
         " HP).",
       "win"
     );
+  }
+
+  function applyStartBuff(lane, laneIdx, prefix) {
+    lane.forEach((u) => {
+      if (u.trigger !== "start") return;
+      const partner = lane.find((o) => o !== u);
+      const target = partner || u;
+      target.atk += 1;
+      if (partner) {
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → +1 ATK " +
+            target.name +
+            " (" +
+            target.atk +
+            ")."
+        );
+      } else {
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → self " +
+            target.atk +
+            " ATK (solo)."
+        );
+      }
+    });
   }
 
   function front(stack) {
@@ -392,26 +451,8 @@
     };
 
     for (let i = 0; i < 3; i++) {
-      boards.you[i].forEach((u) => {
-        if (u.trigger === "start") {
-          u.atk += 1;
-          log("Lane " + (i + 1) + ": " + u.name + " Start → " + u.atk + " ATK.");
-        }
-      });
-      boards.enemy[i].forEach((u) => {
-        if (u.trigger === "start") {
-          u.atk += 1;
-          log(
-            "Lane " +
-              (i + 1) +
-              ": enemy " +
-              u.name +
-              " Start → " +
-              u.atk +
-              " ATK."
-          );
-        }
-      });
+      applyStartBuff(boards.you[i], i, "");
+      applyStartBuff(boards.enemy[i], i, "enemy ");
     }
 
     let guard = 80;
@@ -606,6 +647,11 @@
     state.lastEnemy = snapshotLanes(state.enemy);
     state.log = [];
     log("— Round " + state.round + " fight —");
+    if (state.round === 1) {
+      log("AI R1 policy: 3 buys, 1-1-1 cover. Occupied " + state.enemy.filter((l) => l.length).length + "/3 lanes.");
+    } else {
+      log("AI cover-first. Occupied " + state.enemy.filter((l) => l.length).length + "/3 lanes.");
+    }
     el.shop.classList.add("hidden");
     render();
 
