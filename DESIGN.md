@@ -2,7 +2,7 @@
 
 Short MUST / MUST NOT for bots and humans. No full GDD.
 
-Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses, 8 roles with Start / Hurt / Faint. Wall Hurt splashes. Shop marks copies.
+Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses, 9 roles with Start / Hurt / Faint. Support is the partner slot. Wall Hurt splashes. Shop marks copies.
 
 ## 1) R1 AI shop — always fill 3
 
@@ -46,7 +46,30 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST** — If a shop offer’s role is already on the player board, mark it **Copy**. Information only.
 - **MUST NOT** — Bias rolls toward copies. Don’t pity-timer a matching unit.
 
-**MUST NOT (until A–C ship)** food, shop tiers, items, a bench, extra gold on triggers, or a 9th role.
+**MUST NOT (until A–C ship)** food, shop tiers, items, a bench, extra gold on triggers.
+
+## 4) Support split — ship with the 9th role
+
+The old 8 names were 3 verbs. Support is a **partner job**, not a 4th trigger.
+
+**MUST**
+- Guard Start: **+1 ATK** partner (self if solo). 2/5.
+- Blade Start: **+2 ATK** partner, **+1 ATK** if solo. 3/2.
+- Anchor Start: **+2 HP** partner (self if solo). Combat HP only — do not raise maxHp. 1/6.
+- Skirmisher Hurt: 1 to attacker **and +1 HP** partner (self if solo). 2/4.
+- Bruiser Hurt: 1 to attacker only. 4/2.
+- Wall Hurt: splash, unchanged. 2/6.
+- Medic Faint: **+2 HP** partner. 1/4.
+- Scout Faint: **+1 HP** adjacent lane. 2/3.
+- **Crew** (9th): Faint **+1 ATK** partner. 2/3. Wants to die in front.
+- Combat Start / Hurt / Faint do **not** persist. Service and Veteran still do.
+
+**MUST NOT**
+- A 4th trigger (cast, buy, sell, end-of-turn).
+- Food, a bench, shop tiers, leftover gold.
+- Make Anchor Start raise maxHp (that would stack every round).
+- Make Crew ATK persist by copying combat boards back onto the shop board.
+- Add cap 3 or animation in this step.
 
 ## 3) Combine / Veteran — shipping, not SAP 3-copy
 

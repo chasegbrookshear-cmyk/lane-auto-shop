@@ -1,13 +1,14 @@
 (() => {
   const UNITS = [
     { id: "guard", name: "Guard", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
-    { id: "skirmisher", name: "Skirmisher", atk: 3, hp: 3, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
-    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Skirmisher", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
+    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
     { id: "scout", name: "Scout", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
     { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
-    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +1 HP partner in this lane" },
-    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
+    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
     { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
+    { id: "crew", name: "Crew", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
   ];
 
   const BUY = 3;
@@ -473,15 +474,37 @@
       ally = board[allyLane].find((u) => u.hp > 0);
       if (!ally) return;
     }
-    ally.hp += 1;
     const where = aim === "partner" ? "partner" : "Lane " + (allyLane + 1);
+    if (unit.id === "crew") {
+      ally.atk += 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          unit.name +
+          " Faint → +1 ATK " +
+          where +
+          " " +
+          ally.name +
+          " (" +
+          ally.atk +
+          ").",
+        "win"
+      );
+      return;
+    }
+    const amt = unit.id === "medic" ? 2 : 1;
+    ally.hp += amt;
     log(
       "Lane " +
         (laneIdx + 1) +
         ": " +
         prefix +
         unit.name +
-        " Faint → +1 HP " +
+        " Faint → +" +
+        amt +
+        " HP " +
         where +
         " " +
         ally.name +
@@ -494,35 +517,42 @@
 
   function applyStartBuff(lane, laneIdx, prefix) {
     lane.forEach((u) => {
-      if (u.trigger !== "start") return;
-      const partner = lane.find((o) => o !== u);
+      if (u.trigger !== "start" || u.hp <= 0) return;
+      const partner = lane.find((o) => o !== u && o.hp > 0);
       const target = partner || u;
-      target.atk += 1;
-      if (partner) {
+      const who = partner ? target.name : "self";
+      if (u.id === "anchor") {
+        target.hp += 2;
         log(
           "Lane " +
             (laneIdx + 1) +
             ": " +
             prefix +
             u.name +
-            " Start → +1 ATK " +
-            target.name +
+            " Start → +2 HP " +
+            who +
             " (" +
-            target.atk +
-            ")."
+            target.hp +
+            " HP)."
         );
-      } else {
-        log(
-          "Lane " +
-            (laneIdx + 1) +
-            ": " +
-            prefix +
-            u.name +
-            " Start → self " +
-            target.atk +
-            " ATK (solo)."
-        );
+        return;
       }
+      const amt = u.id === "blade" && partner ? 2 : 1;
+      target.atk += amt;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          u.name +
+          " Start → +" +
+          amt +
+          " ATK " +
+          who +
+          " (" +
+          target.atk +
+          ")."
+      );
     });
   }
 
@@ -568,6 +598,26 @@
         Math.max(0, attacker.hp) +
         " HP)."
     );
+    if (hurter.id === "skirmisher") {
+      const board = hurterSide === "you" ? boards.you : boards.enemy;
+      const partner = board[laneIdx].find(function (o) {
+        return o !== hurter && o.hp > 0;
+      });
+      const healed = partner || hurter;
+      healed.hp += 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          hurter.name +
+          " Hurt → +1 HP " +
+          (partner ? healed.name : "self") +
+          " (" +
+          healed.hp +
+          " HP).",
+        "win"
+      );
+    }
     if (hurter.id !== "wall") return;
     const enemyBoard = hurterSide === "you" ? boards.enemy : boards.you;
     const splashSide = hurterSide === "you" ? "enemy" : "you";
