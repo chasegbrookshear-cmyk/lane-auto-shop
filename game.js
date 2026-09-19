@@ -12,8 +12,11 @@
 
   const BUY = 3;
   const ROLL = 1;
+  const SERVICE = 3;
   const START_GOLD = 9;
   const CAP = 2;
+  const VET_ATK = 1;
+  const VET_HP = 2;
 
   const el = {
     gold: document.getElementById("gold"),
@@ -53,6 +56,19 @@
   }
 
   function cloneUnit(u) {
+    if (u && u.maxHp != null) {
+      return {
+        id: u.id,
+        name: u.name,
+        atk: u.atk,
+        hp: u.hp,
+        maxHp: u.maxHp,
+        trigger: u.trigger,
+        faintAim: u.faintAim,
+        text: u.text,
+        veteran: !!u.veteran,
+      };
+    }
     const t = u.id ? template(u.id) : u;
     return {
       id: t.id,
@@ -63,21 +79,21 @@
       trigger: t.trigger,
       faintAim: t.faintAim,
       text: t.text,
+      veteran: false,
     };
   }
 
   function healUnit(u) {
-    const t = template(u.id);
-    return {
-      id: t.id,
-      name: t.name,
-      atk: t.atk,
-      hp: t.hp,
-      maxHp: t.hp,
-      trigger: t.trigger,
-      faintAim: t.faintAim,
-      text: t.text,
-    };
+    return Object.assign({}, u, { hp: u.maxHp });
+  }
+
+  function canFuseLane(stack) {
+    return (
+      stack.length === 2 &&
+      stack[0].id === stack[1].id &&
+      !stack[0].veteran &&
+      !stack[1].veteran
+    );
   }
 
   function randomUnit() {
@@ -202,6 +218,9 @@
       (mine && state.phase === "shop" && stack.length === 2
         ? ' <button type="button" class="swap" data-swap="' + i + '">Swap</button>'
         : "") +
+      (mine && state.phase === "shop" && canFuseLane(stack)
+        ? ' <button type="button" class="swap fuse" data-fuse="' + i + '">Fuse</button>'
+        : "") +
       "</div>";
     const wrap = document.createElement("div");
     wrap.className = "stack";
@@ -217,25 +236,38 @@
     } else {
       stack.forEach((unit, slot) => {
         const u = document.createElement("div");
-        u.className = "unit" + (slot === 0 ? " front" : "");
+        u.className = "unit" + (slot === 0 ? " front" : "") + (unit.veteran ? " vet" : "");
         u.innerHTML =
           '<span class="name">' +
           (slot === 0 ? "Front · " : "Back · ") +
           unit.name +
-          (mine && state.phase === "shop" ? " · sell " + BUY + "g" : "") +
+          (unit.veteran ? " · VET" : "") +
           '</span><span class="meta">' +
           unit.atk +
           "/" +
           unit.hp +
           " · " +
           unit.text +
-          "</span>";
+          "</span>" +
+          (mine && state.phase === "shop"
+            ? '<span class="unit-acts">' +
+              '<button type="button" class="act" data-sell>Sell ' +
+              BUY +
+              "g</button>" +
+              '<button type="button" class="act" data-svc' +
+              (state.gold < SERVICE ? " disabled" : "") +
+              ">Svc " +
+              SERVICE +
+              "g</button></span>"
+            : "");
         if (mine && state.phase === "shop") {
-          u.title = "Tap to sell for full refund (" + BUY + "g)";
-          u.style.cursor = "pointer";
-          u.addEventListener("click", (e) => {
+          u.querySelector("[data-sell]").addEventListener("click", (e) => {
             e.stopPropagation();
             sellUnit(i, slot);
+          });
+          u.querySelector("[data-svc]").addEventListener("click", (e) => {
+            e.stopPropagation();
+            serviceUnit(i, slot);
           });
         }
         wrap.appendChild(u);
@@ -247,6 +279,13 @@
       swapBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         swapLane(i);
+      });
+    }
+    const fuseBtn = div.querySelector("[data-fuse]");
+    if (fuseBtn) {
+      fuseBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fuseLane(i);
       });
     }
     if (canDrop) div.addEventListener("click", () => onLaneClick(i));
@@ -311,6 +350,47 @@
     render();
   }
 
+  function fuseLane(lane) {
+    if (state.phase !== "shop") return;
+    const stack = state.lanes[lane];
+    if (!canFuseLane(stack)) {
+      log(
+        stack.length === 2 && (stack[0].veteran || stack[1].veteran)
+          ? "Already a Veteran — one step only."
+          : "Fuse needs two matching unfused copies in this lane.",
+      );
+      render();
+      return;
+    }
+    const keep = stack[0];
+    const t = template(keep.id);
+    keep.veteran = true;
+    keep.atk += VET_ATK;
+    keep.maxHp += VET_HP;
+    keep.hp = keep.maxHp;
+    keep.name = "Veteran " + t.name;
+    state.lanes[lane] = [keep];
+    log("Fused two " + t.name + "s into " + keep.name + " (" + keep.atk + "/" + keep.maxHp + "). Slot freed.");
+    render();
+  }
+
+  function serviceUnit(lane, slot) {
+    if (state.phase !== "shop") return;
+    const unit = state.lanes[lane][slot];
+    if (!unit) return;
+    if (state.gold < SERVICE) {
+      log("Not enough gold for Service.");
+      render();
+      return;
+    }
+    state.gold -= SERVICE;
+    unit.atk += 1;
+    unit.maxHp += 1;
+    unit.hp += 1;
+    log("Serviced " + unit.name + " → " + unit.atk + "/" + unit.hp + ".");
+    render();
+  }
+
   function doRoll() {
     if (state.phase !== "shop" || state.gold < ROLL) return;
     state.gold -= ROLL;
@@ -328,7 +408,10 @@
     const maxBuys = state.round === 1 ? 3 : Math.min(6, Math.floor(budget / BUY));
     while (budget >= BUY && picks.length < maxBuys) {
       const u = randomUnit();
-      if (state.round >= 2 && Math.random() < 0.35) u.hp += 1;
+      if (state.round >= 2 && Math.random() < 0.35) {
+        u.hp += 1;
+        u.maxHp += 1;
+      }
       if (state.round >= 3 && Math.random() < 0.35) u.atk += 1;
       picks.push(u);
       budget -= BUY;
