@@ -12,7 +12,8 @@
 
   const BUY = 3;
   const ROLL = 1;
-  const START_GOLD = 6;
+  const START_GOLD = 9;
+  const CAP = 2;
 
   const el = {
     gold: document.getElementById("gold"),
@@ -26,8 +27,11 @@
     endTitle: document.getElementById("end-title"),
     endDetail: document.getElementById("end-detail"),
     shop: document.getElementById("shop-screen"),
+    spendWrap: document.getElementById("spend-wrap"),
+    spendMap: document.getElementById("spend-map"),
     btnRoll: document.getElementById("btn-roll"),
     btnEnd: document.getElementById("btn-end"),
+    btnNext: document.getElementById("btn-next"),
     btnRematch: document.getElementById("btn-rematch"),
   };
 
@@ -43,7 +47,6 @@
       else fetch(url, { mode: "no-cors", keepalive: true }).catch(() => {});
     } catch (_) {}
   }
-
 
   function template(id) {
     return UNITS.find((x) => x.id === id) || UNITS[0];
@@ -62,8 +65,29 @@
     };
   }
 
+  function healUnit(u) {
+    const t = template(u.id);
+    return {
+      id: t.id,
+      name: t.name,
+      atk: t.atk,
+      hp: t.hp,
+      maxHp: t.hp,
+      trigger: t.trigger,
+      text: t.text,
+    };
+  }
+
   function randomUnit() {
     return cloneUnit(UNITS[Math.floor(Math.random() * UNITS.length)]);
+  }
+
+  function emptyLanes() {
+    return [[], [], []];
+  }
+
+  function countUnits(lanes) {
+    return lanes.reduce((n, stack) => n + stack.length, 0);
   }
 
   function rollOffers(keepFrozen) {
@@ -83,20 +107,24 @@
       losses: 0,
       phase: "shop",
       offers: rollOffers(false),
-      lanes: [null, null, null],
-      enemy: [null, null, null],
+      lanes: emptyLanes(),
+      enemy: emptyLanes(),
+      lastEnemy: emptyLanes(),
+      lastYou: emptyLanes(),
       log: [],
+      pendingRound: null,
     };
     selectedOffer = null;
     freezeIdx = null;
     el.end.classList.add("hidden");
+    el.spendWrap.classList.add("hidden");
     el.shop.classList.remove("hidden");
     render();
   }
 
   function log(msg, cls) {
     state.log.push({ msg, cls });
-    if (state.log.length > 100) state.log.shift();
+    if (state.log.length > 120) state.log.shift();
   }
 
   function render() {
@@ -105,32 +133,34 @@
     el.record.textContent = "W" + state.wins + " – L" + state.losses;
 
     el.offers.innerHTML = "";
-    state.offers.forEach((u, i) => {
-      if (!u) return;
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className =
-        "offer" +
-        (selectedOffer === i ? " selected" : "") +
-        (freezeIdx === i ? " frozen" : "");
-      btn.innerHTML =
-        '<span class="name">' +
-        u.name +
-        " · " +
-        BUY +
-        'g</span><span class="meta">' +
-        u.atk +
-        "/" +
-        u.hp +
-        " · " +
-        u.text +
-        (freezeIdx === i ? " · FROZEN" : "") +
-        "</span>";
-      btn.addEventListener("click", () => onOfferClick(i));
-      el.offers.appendChild(btn);
-    });
+    if (state.phase === "shop") {
+      state.offers.forEach((u, i) => {
+        if (!u) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className =
+          "offer" +
+          (selectedOffer === i ? " selected" : "") +
+          (freezeIdx === i ? " frozen" : "");
+        btn.innerHTML =
+          '<span class="name">' +
+          u.name +
+          " · " +
+          BUY +
+          "g</span><span class=\"meta\">" +
+          u.atk +
+          "/" +
+          u.hp +
+          " · " +
+          u.text +
+          (freezeIdx === i ? " · FROZEN" : "") +
+          "</span>";
+        btn.addEventListener("click", () => onOfferClick(i));
+        el.offers.appendChild(btn);
+      });
+    }
 
-    const placed = state.lanes.filter(Boolean).length;
+    const placed = countUnits(state.lanes);
     el.btnRoll.disabled = state.phase !== "shop" || state.gold < ROLL;
     el.btnEnd.disabled = state.phase !== "shop" || placed < 1;
     el.btnEnd.title = placed < 1 ? "Place at least 1 unit before fighting" : "";
@@ -139,7 +169,11 @@
     el.enemy.innerHTML = "";
     for (let i = 0; i < 3; i++) {
       el.board.appendChild(laneEl(i, state.lanes[i], true));
-      el.enemy.appendChild(laneEl(i, state.enemy[i], false));
+      const showEnemy =
+        state.phase === "reveal" || state.phase === "fight"
+          ? state.lastEnemy[i]
+          : state.enemy[i];
+      el.enemy.appendChild(laneEl(i, showEnemy || [], false));
     }
 
     el.log.innerHTML = state.log
@@ -148,43 +182,61 @@
     el.log.scrollTop = el.log.scrollHeight;
   }
 
-  function laneEl(i, unit, mine) {
+  function laneEl(i, stack, mine) {
     const div = document.createElement("div");
     const canDrop =
-      mine && state.phase === "shop" && selectedOffer !== null && !state.lanes[i];
+      mine &&
+      state.phase === "shop" &&
+      selectedOffer !== null &&
+      stack.length < CAP;
     div.className = "lane" + (canDrop ? " drop" : "");
-    div.innerHTML = '<div class="tag">Lane ' + (i + 1) + "</div>";
-    if (unit) {
-      const u = document.createElement("div");
-      u.className = "unit";
-      u.innerHTML =
-        '<span class="name">' +
-        unit.name +
-        (mine && state.phase === "shop" ? " · sell " + BUY + "g" : "") +
-        '</span><span class="meta">' +
-        unit.atk +
-        "/" +
-        unit.hp +
-        " · " +
-        unit.text +
-        "</span>";
-      if (mine && state.phase === "shop") {
-        u.title = "Tap to sell for full refund (" + BUY + "g)";
-        u.style.cursor = "pointer";
-        u.addEventListener("click", (e) => {
-          e.stopPropagation();
-          sellLane(i);
-        });
-      }
-      div.appendChild(u);
-    } else {
+    div.innerHTML =
+      '<div class="tag">Lane ' +
+      (i + 1) +
+      " · " +
+      stack.length +
+      "/" +
+      CAP +
+      "</div>";
+    const wrap = document.createElement("div");
+    wrap.className = "stack";
+    if (!stack.length) {
       const empty = document.createElement("div");
       empty.style.color = "var(--muted)";
       empty.style.fontSize = "0.85rem";
       empty.textContent =
-        mine && state.phase === "shop" ? "Empty — tap to place" : "Empty";
-      div.appendChild(empty);
+        mine && state.phase === "shop"
+          ? "Empty — tap to place (max " + CAP + ")"
+          : "Empty";
+      wrap.appendChild(empty);
+    } else {
+      stack.forEach((unit, slot) => {
+        const u = document.createElement("div");
+        u.className = "unit" + (slot === 0 ? " front" : "");
+        u.innerHTML =
+          '<span class="name">' +
+          (slot === 0 ? "Front · " : "Back · ") +
+          unit.name +
+          (mine && state.phase === "shop" ? " · sell " + BUY + "g" : "") +
+          '</span><span class="meta">' +
+          unit.atk +
+          "/" +
+          unit.hp +
+          " · " +
+          unit.text +
+          "</span>";
+        if (mine && state.phase === "shop") {
+          u.title = "Tap to sell for full refund (" + BUY + "g)";
+          u.style.cursor = "pointer";
+          u.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sellUnit(i, slot);
+          });
+        }
+        wrap.appendChild(u);
+      });
     }
+    div.appendChild(wrap);
     if (canDrop) div.addEventListener("click", () => onLaneClick(i));
     return div;
   }
@@ -202,30 +254,36 @@
 
   function onLaneClick(i) {
     if (state.phase !== "shop" || selectedOffer === null) return;
-    if (state.lanes[i]) return;
+    if (state.lanes[i].length >= CAP) {
+      log("Lane " + (i + 1) + " is full (max " + CAP + ").");
+      render();
+      return;
+    }
     if (state.gold < BUY) {
-      log("Not enough gold to buy.");
+      log("Not enough gold.");
       render();
       return;
     }
     const offer = state.offers[selectedOffer];
     state.gold -= BUY;
-    state.lanes[i] = cloneUnit(offer);
+    state.lanes[i].push(cloneUnit(offer));
+    state.offers[selectedOffer] = null;
+    if (freezeIdx === selectedOffer) freezeIdx = null;
+    selectedOffer = null;
     if (!sessionStarted) {
       sessionStarted = true;
       ping("session_start");
     }
-    state.offers[selectedOffer] = null;
-    if (freezeIdx === selectedOffer) freezeIdx = null;
-    selectedOffer = null;
-    log("Bought " + offer.name + " into Lane " + (i + 1) + ".");
+    log("Bought " + offer.name + " into Lane " + (i + 1) + " (slot " + state.lanes[i].length + ").");
     render();
   }
 
-  function sellLane(i) {
-    if (state.phase !== "shop" || !state.lanes[i]) return;
-    const name = state.lanes[i].name;
-    state.lanes[i] = null;
+  function sellUnit(lane, slot) {
+    if (state.phase !== "shop") return;
+    const stack = state.lanes[lane];
+    if (!stack[slot]) return;
+    const name = stack[slot].name;
+    stack.splice(slot, 1);
     state.gold += BUY;
     selectedOffer = null;
     log("Sold " + name + " (+" + BUY + "g refund).");
@@ -242,21 +300,54 @@
   }
 
   function buildEnemy() {
-    const enemy = [];
-    for (let i = 0; i < 3; i++) {
-      const u = randomUnit();
-      if (state.round >= 2 && Math.random() < 0.4) u.hp += 1;
-      if (state.round >= 3 && Math.random() < 0.4) u.atk += 1;
-      enemy.push(u);
+    // Mirror player spend roughly: fill with 2–3 buys worth, stack preference
+    const enemy = emptyLanes();
+    let budget = START_GOLD + Math.min(2, state.round - 1) * 3;
+    const picks = [];
+    while (budget >= BUY && picks.length < 6) {
+      picks.push(randomUnit());
+      budget -= BUY;
+      if (state.round >= 2 && Math.random() < 0.35) {
+        picks[picks.length - 1].hp += 1;
+      }
+      if (state.round >= 3 && Math.random() < 0.35) {
+        picks[picks.length - 1].atk += 1;
+      }
+    }
+    // Prefer stacking into 1–2 lanes so spend map is visible
+    const focus = Math.random() < 0.55 ? [0, 0, 1, 1, 2] : [0, 1, 2, 0, 1, 2];
+    let fi = 0;
+    for (const u of picks) {
+      let placed = false;
+      for (let tries = 0; tries < 6 && !placed; tries++) {
+        const lane = focus[fi % focus.length];
+        fi++;
+        if (enemy[lane].length < CAP) {
+          enemy[lane].push(u);
+          placed = true;
+        }
+      }
+      if (!placed) {
+        for (let lane = 0; lane < 3; lane++) {
+          if (enemy[lane].length < CAP) {
+            enemy[lane].push(u);
+            break;
+          }
+        }
+      }
     }
     return enemy;
   }
 
-  function applyFaint(side, laneIdx, unit) {
+  function snapshotLanes(lanes) {
+    return lanes.map((stack) => stack.map((u) => cloneUnit(u)));
+  }
+
+  function applyFaint(side, laneIdx, unit, boards) {
     if (!unit || unit.trigger !== "faint") return;
-    const board = side === "you" ? state.fightYou : state.fightEnemy;
+    const board = side === "you" ? boards.you : boards.enemy;
     const adj = [laneIdx - 1, laneIdx + 1].filter(
-      (j) => j >= 0 && j < 3 && board[j] && board[j].hp > 0
+      (j) => j >= 0 && j < 3 && board[j].some((u) => u.hp > 0)
     );
     if (!adj.length) {
       log(
@@ -270,7 +361,9 @@
       return;
     }
     const j = adj[0];
-    board[j].hp += 1;
+    const ally = board[j].find((u) => u.hp > 0);
+    if (!ally) return;
+    ally.hp += 1;
     log(
       "Lane " +
         (laneIdx + 1) +
@@ -280,47 +373,55 @@
         " Faint → +1 HP to Lane " +
         (j + 1) +
         " " +
-        board[j].name +
+        ally.name +
         " (" +
-        board[j].hp +
+        ally.hp +
         " HP).",
       "win"
     );
   }
 
-  function resolveCombat() {
-    state.fightYou = state.lanes.map((u) => (u ? { ...u } : null));
-    state.fightEnemy = state.enemy.map((u) => (u ? { ...u } : null));
+  function front(stack) {
+    return stack.find((u) => u.hp > 0) || null;
+  }
+
+  function resolveCombat(youSnap, enemySnap) {
+    const boards = {
+      you: youSnap.map((s) => s.map((u) => ({ ...u }))),
+      enemy: enemySnap.map((s) => s.map((u) => ({ ...u }))),
+    };
 
     for (let i = 0; i < 3; i++) {
-      const a = state.fightYou[i];
-      const b = state.fightEnemy[i];
-      if (a && a.trigger === "start") {
-        a.atk += 1;
-        log("Lane " + (i + 1) + ": " + a.name + " Start → " + a.atk + " ATK.");
-      }
-      if (b && b.trigger === "start") {
-        b.atk += 1;
-        log(
-          "Lane " +
-            (i + 1) +
-            ": enemy " +
-            b.name +
-            " Start → " +
-            b.atk +
-            " ATK."
-        );
-      }
+      boards.you[i].forEach((u) => {
+        if (u.trigger === "start") {
+          u.atk += 1;
+          log("Lane " + (i + 1) + ": " + u.name + " Start → " + u.atk + " ATK.");
+        }
+      });
+      boards.enemy[i].forEach((u) => {
+        if (u.trigger === "start") {
+          u.atk += 1;
+          log(
+            "Lane " +
+              (i + 1) +
+              ": enemy " +
+              u.name +
+              " Start → " +
+              u.atk +
+              " ATK."
+          );
+        }
+      });
     }
 
-    let guard = 60;
+    let guard = 80;
     while (guard-- > 0) {
-      let anyFight = false;
+      let any = false;
       for (let i = 0; i < 3; i++) {
-        const a = state.fightYou[i];
-        const b = state.fightEnemy[i];
-        if (!a || !b || a.hp <= 0 || b.hp <= 0) continue;
-        anyFight = true;
+        const a = front(boards.you[i]);
+        const b = front(boards.enemy[i]);
+        if (!a || !b) continue;
+        any = true;
 
         b.hp -= a.atk;
         log(
@@ -352,11 +453,15 @@
         }
         if (b.hp <= 0) {
           log("Lane " + (i + 1) + ": " + b.name + " faints.");
-          applyFaint("enemy", i, b);
+          applyFaint("enemy", i, b, boards);
+          const next = front(boards.enemy[i]);
+          if (next) log("Lane " + (i + 1) + ": enemy " + next.name + " steps up.");
         }
         if (a.hp <= 0) {
           log("Lane " + (i + 1) + ": " + a.name + " faints.");
-          applyFaint("you", i, a);
+          applyFaint("you", i, a, boards);
+          const next = front(boards.you[i]);
+          if (next) log("Lane " + (i + 1) + ": " + next.name + " steps up.");
           continue;
         }
         if (b.hp <= 0) continue;
@@ -391,41 +496,40 @@
         }
         if (a.hp <= 0) {
           log("Lane " + (i + 1) + ": " + a.name + " faints.");
-          applyFaint("you", i, a);
+          applyFaint("you", i, a, boards);
+          const next = front(boards.you[i]);
+          if (next) log("Lane " + (i + 1) + ": " + next.name + " steps up.");
         }
         if (b.hp <= 0) {
           log("Lane " + (i + 1) + ": " + b.name + " faints.");
-          applyFaint("enemy", i, b);
+          applyFaint("enemy", i, b, boards);
+          const next = front(boards.enemy[i]);
+          if (next) log("Lane " + (i + 1) + ": enemy " + next.name + " steps up.");
         }
       }
-      if (!anyFight) break;
+      if (!any) break;
     }
 
     let youLanes = 0;
     let enemyLanes = 0;
     for (let i = 0; i < 3; i++) {
-      const a = state.fightYou[i];
-      const b = state.fightEnemy[i];
-      const aOk = a && a.hp > 0;
-      const bOk = b && b.hp > 0;
-      if (aOk && !bOk) {
+      const aAlive = boards.you[i].some((u) => u.hp > 0);
+      const bAlive = boards.enemy[i].some((u) => u.hp > 0);
+      const aEmpty = !boards.you[i].length;
+      const bEmpty = !boards.enemy[i].length;
+      if (aEmpty && bEmpty) {
+        log("Lane " + (i + 1) + ": empty draw.");
+      } else if (aAlive && !bAlive) {
         youLanes += 1;
         log("Lane " + (i + 1) + ": YOU win.", "win");
-      } else if (bOk && !aOk) {
+      } else if (bAlive && !aAlive) {
         enemyLanes += 1;
         log("Lane " + (i + 1) + ": AI wins.", "loss");
-      } else if (!a && !b) {
-        log("Lane " + (i + 1) + ": empty draw.");
-      } else if (!a && bOk) {
-        enemyLanes += 1;
-        log("Lane " + (i + 1) + ": empty — AI wins.", "loss");
-      } else if (aOk && !b) {
-        youLanes += 1;
-        log("Lane " + (i + 1) + ": unopposed — YOU win.", "win");
+      } else if (!aAlive && !bAlive) {
+        log("Lane " + (i + 1) + ": mutual wipe — draw.");
       } else {
-        // both dead or both alive after timeout: compare remaining HP
-        const ah = aOk ? a.hp : 0;
-        const bh = bOk ? b.hp : 0;
+        const ah = boards.you[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
+        const bh = boards.enemy[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
         if (ah > bh) {
           youLanes += 1;
           log("Lane " + (i + 1) + ": YOU win on HP (" + ah + ">" + bh + ").", "win");
@@ -440,20 +544,72 @@
     return { youLanes, enemyLanes };
   }
 
+  function unitListHtml(stack) {
+    if (!stack.length) return "<em>empty</em>";
+    return (
+      "<ul>" +
+      stack
+        .map(
+          (u, idx) =>
+            "<li>" +
+            (idx === 0 ? "Front" : "Back") +
+            ": " +
+            u.name +
+            " " +
+            u.atk +
+            "/" +
+            u.hp +
+            "</li>"
+        )
+        .join("") +
+      "</ul>"
+    );
+  }
+
+  function showSpendMap() {
+    el.spendMap.innerHTML = "";
+    for (let i = 0; i < 3; i++) {
+      const youN = state.lastYou[i].length;
+      const enN = state.lastEnemy[i].length;
+      const box = document.createElement("div");
+      box.className = "spend-lane";
+      box.innerHTML =
+        '<div class="title">Lane ' +
+        (i + 1) +
+        " — you " +
+        youN +
+        " · them " +
+        enN +
+        " (≈" +
+        enN * BUY +
+        "g)</div>" +
+        '<div class="spend-cols"><div><div class="side">You</div>' +
+        unitListHtml(state.lastYou[i]) +
+        '</div><div><div class="side">Opponent</div>' +
+        unitListHtml(state.lastEnemy[i]) +
+        "</div></div>";
+      el.spendMap.appendChild(box);
+    }
+    el.spendWrap.classList.remove("hidden");
+  }
+
   function endTurnFight() {
     if (state.phase !== "shop") return;
-    if (!state.lanes.some(Boolean)) {
+    if (countUnits(state.lanes) < 1) {
       log("Place at least 1 unit before End Turn.");
       render();
       return;
     }
     state.phase = "fight";
     state.enemy = buildEnemy();
+    state.lastYou = snapshotLanes(state.lanes);
+    state.lastEnemy = snapshotLanes(state.enemy);
     state.log = [];
     log("— Round " + state.round + " fight —");
+    el.shop.classList.add("hidden");
     render();
 
-    const { youLanes, enemyLanes } = resolveCombat();
+    const { youLanes, enemyLanes } = resolveCombat(state.lastYou, state.lastEnemy);
     const roundWin = youLanes >= 2;
     if (roundWin) {
       state.wins += 1;
@@ -474,7 +630,14 @@
         "loss"
       );
     }
+    state.pendingRound = { roundWin };
+    state.phase = "reveal";
+    showSpendMap();
+    render();
+  }
 
+  function afterReveal() {
+    el.spendWrap.classList.add("hidden");
     if (state.wins >= 2) {
       showEnd(true, "You won the run " + state.wins + "–" + state.losses + ".");
       return;
@@ -483,22 +646,24 @@
       showEnd(false, "Run over " + state.wins + "–" + state.losses + ".");
       return;
     }
-
+    // Persist + full heal; refresh shop gold
     state.round += 1;
-    state.gold = START_GOLD + Math.min(2, state.round - 1);
-    state.lanes = state.lanes.map((u) => (u ? cloneUnit(u) : null));
+    state.gold = START_GOLD + Math.min(3, state.round - 1);
+    state.lanes = state.lanes.map((stack) => stack.map((u) => healUnit(u)));
     state.offers = rollOffers(false);
     freezeIdx = null;
     selectedOffer = null;
+    state.enemy = emptyLanes();
     state.phase = "shop";
-    state.enemy = [null, null, null];
-    log("Shop — Round " + state.round + ". Gold " + state.gold + ".");
+    el.shop.classList.remove("hidden");
+    log("Shop — Round " + state.round + ". Gold " + state.gold + ". Units persist (healed).");
     render();
   }
 
   function showEnd(won, detail) {
     state.phase = "end";
     el.shop.classList.add("hidden");
+    el.spendWrap.classList.add("hidden");
     el.end.classList.remove("hidden");
     el.endTitle.textContent = won ? "Run cleared!" : "Run failed";
     el.endDetail.textContent = detail;
@@ -507,6 +672,7 @@
 
   el.btnRoll.addEventListener("click", doRoll);
   el.btnEnd.addEventListener("click", endTurnFight);
+  el.btnNext.addEventListener("click", afterReveal);
   el.btnRematch.addEventListener("click", startRun);
 
   startRun();

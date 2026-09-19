@@ -1,12 +1,11 @@
-# Lane Auto Shop (spike)
+# Lane Auto Shop (v2 — multi-unit lanes)
 
-SAP-inspired **3-lane** auto-battler — original roles, not pets.
+9 gold shop · units 3g · up to 2 per lane · persist between rounds · post-round spend map.
 
 ## Play
-Shop (6g) → place ≤1 unit per lane → End Turn → win 2 of 3 lanes. Win 2 rounds before 2 losses.
+https://chasegbrookshear-cmyk.github.io/lane-auto-shop/
 
-## Run locally
+## Local
 ```bash
-cd lane-auto-shop && python3 -m http.server 8767
+python3 -m http.server 8767
 ```
-Open http://127.0.0.1:8767
