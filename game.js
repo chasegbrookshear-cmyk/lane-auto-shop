@@ -1,14 +1,14 @@
 (() => {
   const UNITS = [
-    { id: "guard", name: "Guard", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
-    { id: "skirmisher", name: "Skirmisher", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
-    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
-    { id: "scout", name: "Scout", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
-    { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
-    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
-    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
-    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
-    { id: "crew", name: "Crew", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
+    { id: "guard", name: "Bumper", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Rivet", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
+    { id: "anchor", name: "Jack", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
+    { id: "scout", name: "Spotter", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
+    { id: "bruiser", name: "Sledge", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: 1 to attacker" },
+    { id: "medic", name: "Patch", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
+    { id: "blade", name: "Torque", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
+    { id: "wall", name: "Fender", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
+    { id: "crew", name: "Pit", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
   ];
 
   const BUY = 3;
@@ -411,13 +411,7 @@
     const picks = [];
     const maxBuys = state.round === 1 ? 3 : Math.min(6, Math.floor(budget / BUY));
     while (budget >= BUY && picks.length < maxBuys) {
-      const u = randomUnit();
-      if (state.round >= 2 && Math.random() < 0.35) {
-        u.hp += 1;
-        u.maxHp += 1;
-      }
-      if (state.round >= 3 && Math.random() < 0.35) u.atk += 1;
-      picks.push(u);
+      picks.push(randomUnit());
       budget -= BUY;
     }
     for (let lane = 0; lane < 3 && picks.length; lane++) {
@@ -442,7 +436,17 @@
       }
       enemy[lane].push(u);
     }
-    return enemy;
+    if (enemy.filter(function (l) { return l.length > 0; }).length < 3) return enemy;
+    return enemy.map(function (stack) {
+      if (!canFuseLane(stack)) return stack;
+      const keep = Object.assign({}, stack[0]);
+      keep.veteran = true;
+      keep.atk += VET_ATK;
+      keep.maxHp += VET_HP;
+      keep.hp = keep.maxHp;
+      keep.name = "Veteran " + keep.name.replace(/^Veteran /, "");
+      return [keep];
+    });
   }
 
   function snapshotLanes(lanes) {
