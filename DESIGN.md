@@ -2,7 +2,7 @@
 
 Short MUST / MUST NOT for bots and humans. No full GDD.
 
-Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses, 9 roles with Start / Hurt / Faint. Support is the partner slot. Wall Hurt splashes. Shop marks copies.
+Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses. Display names: Bumper, Rivet, Jack, Spotter, Sledge, Patch, Torque, Fender, Pit. Support is the partner slot. Fender Hurt splashes. Shop marks copies. AI fuses after 1-1-1. Combat ticks HP on the facing board.
 
 ## 1) R1 AI shop — always fill 3
 
@@ -13,13 +13,15 @@ Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/la
 - If you later simulate a real shop: greedy-buy until 3 lanes have a unit; only then may you roll.
 - Keep hidden-info (build at End Turn). Placement stays cover-first even if the player left a hole.
 - Spend map must show 3 occupied enemy lanes every R1.
+- After R1, if 3 lanes are occupied, fuse matching copies in a lane (same Veteran rule as the player). No leftover gold. No R2/R3 stat hacks.
 
 **MUST NOT**
 - 2-1-0 / 2-0-1 / 3-unit stack on R1.
 - Roll away the 3rd body.
 - Snipe a player-empty lane on R1.
 - End an R1 AI board with `<3` units.
-- Give AI extra gold or `+hp/+atk` on R1.
+- Give AI extra gold or `+hp/+atk` on R1 **or later**.
+- Fuse on R1.
 
 ## 2) Cheap depth — after 1-1-1 feels fair
 
@@ -53,15 +55,15 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 The old 8 names were 3 verbs. Support is a **partner job**, not a 4th trigger.
 
 **MUST**
-- Guard Start: **+1 ATK** partner (self if solo). 2/5.
-- Blade Start: **+2 ATK** partner, **+1 ATK** if solo. 3/2.
-- Anchor Start: **+2 HP** partner (self if solo). Combat HP only — do not raise maxHp. 1/6.
-- Skirmisher Hurt: 1 to attacker **and +1 HP** partner (self if solo). 2/4.
-- Bruiser Hurt: 1 to attacker only. 4/2.
-- Wall Hurt: splash, unchanged. 2/6.
-- Medic Faint: **+2 HP** partner. 1/4.
-- Scout Faint: **+1 HP** adjacent lane. 2/3.
-- **Crew** (9th): Faint **+1 ATK** partner. 2/3. Wants to die in front.
+- Guard Start: **+1 ATK** partner (self if solo). 2/5. Name: **Bumper**.
+- Blade Start: **+2 ATK** partner, **+1 ATK** if solo. 3/2. Name: **Torque**.
+- Anchor Start: **+2 HP** partner (self if solo). Combat HP only — do not raise maxHp. 1/6. Name: **Jack**.
+- Skirmisher Hurt: 1 to attacker **and +1 HP** partner (self if solo). 2/4. Name: **Rivet**.
+- Bruiser Hurt: 1 to attacker only. 4/2. Name: **Sledge**.
+- Wall Hurt: splash, unchanged. 2/6. Name: **Fender**.
+- Medic Faint: **+2 HP** partner. 1/4. Name: **Patch**.
+- Scout Faint: **+1 HP** adjacent lane. 2/3. Name: **Spotter**.
+- **Crew** (9th): Faint **+1 ATK** partner. 2/3. Name: **Pit**. Wants to die in front.
 - Combat Start / Hurt / Faint do **not** persist. Service and Veteran still do.
 
 **MUST NOT**
@@ -69,7 +71,10 @@ The old 8 names were 3 verbs. Support is a **partner job**, not a 4th trigger.
 - Food, a bench, shop tiers, leftover gold.
 - Make Anchor Start raise maxHp (that would stack every round).
 - Make Crew ATK persist by copying combat boards back onto the shop board.
-- Add cap 3 or animation in this step.
+- Add cap 3 or character art in this step.
+- A rules essay in the header after round 1. First shop is one line: “Buy → tap a lane. Cover all 3. Copies fuse.”
+
+Combat board: three facing bays. HP ticks on the cards from event uids. Fainted units grey out. No sprites.
 
 ## 3) Combine / Veteran — shipping, not SAP 3-copy
 
@@ -83,7 +88,7 @@ The old 8 names were 3 verbs. Support is a **partner job**, not a 4th trigger.
 - Sell always refunds **3g**, even on Veterans and Serviced units. Service gold and the fused body are spent.
 - Persist: between rounds, heal HP to maxHp. **Keep** atk, maxHp, veteran flag, and name. Never rebuild from the roster template.
 - Combine / Service happen **on the lane**. Unit shop price stays flat 3g.
-- AI this build: cover-first bodies. Do **not** auto-fuse (fusing after a full buy throws away a body with no refill). Same fuse rule if a later shop sim would still occupy 3 lanes after.
+- AI this build: cover-first bodies. After 1-1-1, fuse matching copies. Do not Service. Do not stat-hack.
 
 **MUST NOT**
 - 3 copies anywhere → L2, then 3 L2s → L3.
