@@ -48,6 +48,14 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 
 **MUST NOT (until A–C ship)** food, shop tiers, items, a bench, extra gold on triggers.
 
+**D. Move (0g, shop)**
+- **MUST** — Tap a placed unit, then an open bay to relocate, or another unit to **swap** (cross-lane included). 0g.
+- **MUST NOT** — A bench. The other bay is the bench. Don't charge gold.
+
+**E. First strike**
+- **MUST** — The fighting front with **higher ATK** swings first. Ties go to you. Swap/Move now aim the seam.
+- **MUST NOT** — Always let the player punch first.
+
 ## 4) Support split — ship with the 9th role
 
 The old 8 names were 3 verbs. Support is a **partner job**, not a 4th trigger.
