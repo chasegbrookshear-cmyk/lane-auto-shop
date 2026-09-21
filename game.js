@@ -215,8 +215,8 @@
     const canDrop =
       mine &&
       state.phase === "shop" &&
-      stack.length < CAP &&
-      (selectedOffer !== null || (selectedUnit && selectedUnit.lane !== i));
+      ((selectedOffer !== null && stack.length < CAP) ||
+        (selectedUnit && selectedUnit.lane !== i));
     div.className = "lane" + (canDrop ? " drop" : "");
     div.innerHTML =
       '<div class="tag">Lane ' +
@@ -324,7 +324,10 @@
 
   function onUnitClick(lane, slot) {
     if (state.phase !== "shop") return;
-    selectedOffer = null;
+    if (selectedOffer !== null) {
+      onLaneClick(lane);
+      return;
+    }
     if (selectedUnit && (selectedUnit.lane !== lane || selectedUnit.slot !== slot)) {
       moveUnit(lane, slot);
       return;
@@ -371,7 +374,8 @@
   function onLaneClick(i) {
     if (state.phase !== "shop") return;
     if (selectedUnit) {
-      moveUnit(i);
+      if (state.lanes[i].length >= CAP) moveUnit(i, state.lanes[i].length - 1);
+      else moveUnit(i);
       return;
     }
     if (selectedOffer === null) return;
