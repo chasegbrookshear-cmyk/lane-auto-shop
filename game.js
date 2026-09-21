@@ -1,14 +1,14 @@
 (() => {
   const UNITS = [
-    { id: "guard", name: "Guard", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
-    { id: "skirmisher", name: "Skirmisher", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
-    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
-    { id: "scout", name: "Scout", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
-    { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
-    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
-    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
-    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
-    { id: "crew", name: "Crew", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
+    { id: "guard", name: "Bumper", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Rivet", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
+    { id: "anchor", name: "Jack", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
+    { id: "scout", name: "Spotter", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
+    { id: "bruiser", name: "Sledge", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: 1 to attacker" },
+    { id: "medic", name: "Patch", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
+    { id: "blade", name: "Torque", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
+    { id: "wall", name: "Fender", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
+    { id: "crew", name: "Pit", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
   ];
 
   const BUY = 3;
@@ -43,6 +43,7 @@
 
   let state = null;
   let selectedOffer = null;
+  let selectedUnit = null;
   let freezeIdx = null;
   let sessionStarted = false;
 
@@ -214,8 +215,8 @@
     const canDrop =
       mine &&
       state.phase === "shop" &&
-      selectedOffer !== null &&
-      stack.length < CAP;
+      stack.length < CAP &&
+      (selectedOffer !== null || (selectedUnit && selectedUnit.lane !== i));
     div.className = "lane" + (canDrop ? " drop" : "");
     div.innerHTML =
       '<div class="tag">Lane ' +
@@ -270,6 +271,14 @@
               "g</button></span>"
             : "");
         if (mine && state.phase === "shop") {
+          u.style.cursor = "pointer";
+          if (selectedUnit && selectedUnit.lane === i && selectedUnit.slot === slot) {
+            u.className += " selected";
+          }
+          u.addEventListener("click", (e) => {
+            e.stopPropagation();
+            onUnitClick(i, slot);
+          });
           u.querySelector("[data-sell]").addEventListener("click", (e) => {
             e.stopPropagation();
             sellUnit(i, slot);
@@ -303,6 +312,7 @@
 
   function onOfferClick(i) {
     if (state.phase !== "shop") return;
+    selectedUnit = null;
     if (selectedOffer === i) {
       freezeIdx = freezeIdx === i ? null : i;
       render();
@@ -312,8 +322,59 @@
     render();
   }
 
+  function onUnitClick(lane, slot) {
+    if (state.phase !== "shop") return;
+    selectedOffer = null;
+    if (selectedUnit && (selectedUnit.lane !== lane || selectedUnit.slot !== slot)) {
+      moveUnit(lane, slot);
+      return;
+    }
+    if (selectedUnit && selectedUnit.lane === lane && selectedUnit.slot === slot) {
+      selectedUnit = null;
+    } else {
+      selectedUnit = { lane: lane, slot: slot };
+    }
+    render();
+  }
+
+  function moveUnit(toLane, toSlot) {
+    if (!selectedUnit) return;
+    const from = selectedUnit;
+    const a = state.lanes[from.lane][from.slot];
+    if (!a) return;
+    if (toSlot === undefined) {
+      if (state.lanes[toLane].length >= CAP) {
+        log("Lane is full — tap a unit there to swap.");
+        render();
+        return;
+      }
+      state.lanes[from.lane].splice(from.slot, 1);
+      state.lanes[toLane].push(a);
+      selectedUnit = null;
+      log("Moved " + a.name + " to Lane " + (toLane + 1) + ".");
+      render();
+      return;
+    }
+    const dest = state.lanes[toLane][toSlot];
+    if (!dest) return;
+    state.lanes[from.lane][from.slot] = dest;
+    state.lanes[toLane][toSlot] = a;
+    selectedUnit = null;
+    log(
+      from.lane === toLane
+        ? "Lane " + (toLane + 1) + ": swapped front/back."
+        : "Swapped " + a.name + " (Lane " + (from.lane + 1) + ") with " + dest.name + " (Lane " + (toLane + 1) + ").",
+    );
+    render();
+  }
+
   function onLaneClick(i) {
-    if (state.phase !== "shop" || selectedOffer === null) return;
+    if (state.phase !== "shop") return;
+    if (selectedUnit) {
+      moveUnit(i);
+      return;
+    }
+    if (selectedOffer === null) return;
     if (state.lanes[i].length >= CAP) {
       log("Lane " + (i + 1) + " is full (max " + CAP + ").");
       render();
@@ -789,43 +850,33 @@
         if (!a || !b) continue;
         any = true;
 
-        b.hp -= a.atk;
-        log(
-          "Lane " +
-            (i + 1) +
-            ": " +
-            a.name +
-            " hits " +
-            b.name +
-            " for " +
-            a.atk +
-            " → " +
-            Math.max(0, b.hp) +
-            " HP."
-        );
-        if (b.hp > 0) applyHurt(b, "enemy", i, a, boards, faintUnit);
-        faintUnit("enemy", b, i);
-        faintUnit("you", a, i);
-        if (a.hp <= 0) continue;
-        if (b.hp <= 0) continue;
+        function swing(att, def, attSide, defSide) {
+          def.hp -= att.atk;
+          log(
+            "Lane " +
+              (i + 1) +
+              ": " +
+              att.name +
+              " hits " +
+              def.name +
+              " for " +
+              att.atk +
+              " → " +
+              Math.max(0, def.hp) +
+              " HP."
+          );
+          if (def.hp > 0) applyHurt(def, defSide, i, att, boards, faintUnit);
+          faintUnit(defSide, def, i);
+          faintUnit(attSide, att, i);
+        }
 
-        a.hp -= b.atk;
-        log(
-          "Lane " +
-            (i + 1) +
-            ": " +
-            b.name +
-            " hits " +
-            a.name +
-            " for " +
-            b.atk +
-            " → " +
-            Math.max(0, a.hp) +
-            " HP."
-        );
-        if (a.hp > 0) applyHurt(a, "you", i, b, boards, faintUnit);
-        faintUnit("you", a, i);
-        faintUnit("enemy", b, i);
+        if (a.atk >= b.atk) {
+          swing(a, b, "you", "enemy");
+          if (a.hp > 0 && b.hp > 0) swing(b, a, "enemy", "you");
+        } else {
+          swing(b, a, "enemy", "you");
+          if (a.hp > 0 && b.hp > 0) swing(a, b, "you", "enemy");
+        }
       }
       if (!any) break;
     }
