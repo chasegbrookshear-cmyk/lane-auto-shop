@@ -13,7 +13,7 @@ Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/la
 - If you later simulate a real shop: greedy-buy until 3 lanes have a unit; only then may you roll.
 - Keep hidden-info (build at End Turn). Placement stays cover-first even if the player left a hole.
 - Spend map must show 3 occupied enemy lanes every R1.
-- After R1, if 3 lanes are occupied, fuse matching copies in a lane (same Veteran rule as the player). No leftover gold. No R2/R3 stat hacks.
+- After R1, persist the AI shop roster (healed) and spend the **same gold** as the player: cover, fill, fuse copies, Service leftover. No extra gold.
 
 **MUST NOT**
 - 2-1-0 / 2-0-1 / 3-unit stack on R1.
@@ -22,6 +22,11 @@ Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/la
 - End an R1 AI board with `<3` units.
 - Give AI extra gold or `+hp/+atk` on R1 **or later**.
 - Fuse on R1.
+- Rebuild the AI from scratch each round.
+
+**Player R1**
+- **MUST** — End Turn stays locked until 3 lanes are occupied.
+- **MUST** — Freeze is an explicit **Hold** (survives into the next shop). Second tap on an offer deselects; it does not freeze.
 
 ## 2) Cheap depth — after 1-1-1 feels fair
 
