@@ -10,7 +10,7 @@
   <div id="app">
     <header>
       <h1>Lane Auto Shop</h1>
-      <p class="rules">Buy → tap a lane. Cover all 3. Copies fuse.</p>
+      <p class="rules">Win 2 of 3 lanes. First to 3 wins before 3 losses. R1 AI always covers 1-1-1.</p>
     </header>
 
     <section class="hud">
@@ -19,6 +19,11 @@
       <span id="record">W0 – L0</span>
     </section>
 
+    <div id="tip" class="tip">
+      <span>Empty lanes lose. Stack or Service after you cover all three.</span>
+      <button type="button" id="btn-tip-dismiss">Got it</button>
+    </div>
+
     <section id="shop-screen" class="screen">
       <h2>Shop</h2>
       <div id="offers" class="offers"></div>
@@ -26,7 +31,7 @@
         <button type="button" id="btn-roll">Roll (1g)</button>
         <button type="button" id="btn-end" class="primary">End Turn → Fight</button>
       </div>
-      <p class="hint">Select an offer, then tap a lane. Cover all 3. Copies fuse. Sell refunds 3g.</p>
+      <p class="hint">Buy 3g. Tap a lane to place (max 2). Sell refunds 3g. Matching copies: Fuse (0g) into a Veteran and free the partner slot. Shop marks Copy when an offer matches a unit you already have. Service a placed unit 3g for +1/+1. Freeze: tap the selected offer again. Swap front/back for free. Wall Hurt also pings an adjacent enemy front. Empty lanes lose — R1 AI always fills 3.</p>
     </section>
 
     <section class="board-wrap">

@@ -1,14 +1,14 @@
 (() => {
   const UNITS = [
-    { id: "guard", name: "Bumper", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
-    { id: "skirmisher", name: "Rivet", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
-    { id: "anchor", name: "Jack", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
-    { id: "scout", name: "Spotter", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
-    { id: "bruiser", name: "Sledge", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: 1 to attacker" },
-    { id: "medic", name: "Patch", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
-    { id: "blade", name: "Torque", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
-    { id: "wall", name: "Fender", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
-    { id: "crew", name: "Pit", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
+    { id: "guard", name: "Guard", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Skirmisher", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
+    { id: "anchor", name: "Anchor", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
+    { id: "scout", name: "Scout", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
+    { id: "bruiser", name: "Bruiser", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: deal 1 to attacker" },
+    { id: "medic", name: "Medic", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
+    { id: "blade", name: "Blade", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
+    { id: "wall", name: "Wall", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
+    { id: "crew", name: "Crew", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
   ];
 
   const BUY = 3;
@@ -37,6 +37,8 @@
     btnEnd: document.getElementById("btn-end"),
     btnNext: document.getElementById("btn-next"),
     btnRematch: document.getElementById("btn-rematch"),
+    tip: document.getElementById("tip"),
+    btnTipDismiss: document.getElementById("btn-tip-dismiss"),
   };
 
   let state = null;
@@ -130,6 +132,9 @@
       enemy: emptyLanes(),
       lastEnemy: emptyLanes(),
       lastYou: emptyLanes(),
+      enemyPersist: emptyLanes(),
+      aiLostLanes: [],
+      aiNotes: [],
       log: [],
       pendingRound: null,
     };
@@ -404,49 +409,154 @@
     render();
   }
 
+  function unitPower(u) {
+    return (u.atk || 0) + (u.hp || 0);
+  }
+
+  function lanePower(stack) {
+    return stack.reduce((n, u) => n + unitPower(u), 0);
+  }
+
+  function weakestFrontLane(enemy) {
+    let best = -1;
+    let score = Infinity;
+    for (let i = 0; i < 3; i++) {
+      if (!enemy[i].length) continue;
+      const p = unitPower(enemy[i][0]);
+      if (p < score) {
+        score = p;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function pickStackLane(enemy) {
+    const lost = (state.aiLostLanes || []).filter((i) => enemy[i].length < CAP);
+    if (lost.length) return lost[0];
+    const open = [0, 1, 2].filter((i) => enemy[i].length >= 1 && enemy[i].length < CAP);
+    if (!open.length) return -1;
+    open.sort((a, b) => lanePower(enemy[a]) - lanePower(enemy[b]));
+    return open[0];
+  }
+
+  function aiFuseLane(enemy, lane, notes) {
+    const stack = enemy[lane];
+    if (!canFuseLane(stack)) return false;
+    const keep = Object.assign({}, stack[0]);
+    const t = template(keep.id);
+    keep.veteran = true;
+    keep.atk += VET_ATK;
+    keep.maxHp += VET_HP;
+    keep.hp = keep.maxHp;
+    keep.name = "Veteran " + t.name;
+    enemy[lane] = [keep];
+    notes.push("AI Fuse → " + keep.name + " in Lane " + (lane + 1));
+    return true;
+  }
+
+  function aiServiceFront(enemy, lane, notes) {
+    const u = enemy[lane][0];
+    if (!u) return false;
+    u.atk += 1;
+    u.maxHp += 1;
+    u.hp += 1;
+    notes.push("AI Service (+1/+1) on Lane " + (lane + 1) + " " + u.name + " → " + u.atk + "/" + u.hp);
+    return true;
+  }
+
   function buildEnemy() {
-    // R1 MUST: 3 buys, 1-1-1 cover, no rolls, no stat hacks, no sniping.
-    const enemy = emptyLanes();
-    let budget = START_GOLD + Math.min(2, state.round - 1) * 3;
-    const picks = [];
-    const maxBuys = state.round === 1 ? 3 : Math.min(6, Math.floor(budget / BUY));
-    while (budget >= BUY && picks.length < maxBuys) {
-      picks.push(randomUnit());
-      budget -= BUY;
+    const notes = [];
+    // R1 sacred: 9g → 3 buys → 1-1-1. No Service/Fuse/rolls/stat hacks.
+    if (state.round === 1) {
+      const enemy = emptyLanes();
+      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit());
+      notes.push("AI R1: 3 buys, 1-1-1 cover (same 9g).");
+      state.aiNotes = notes;
+      return enemy;
     }
-    for (let lane = 0; lane < 3 && picks.length; lane++) {
-      if (enemy[lane].length === 0) enemy[lane].push(picks.shift());
-    }
-    if (state.round === 1) return enemy;
-    while (picks.length) {
-      const u = picks.shift();
-      let lane = -1;
-      for (let i = 0; i < 3; i++) {
-        if (enemy[i].length === 0) {
-          lane = i;
-          break;
+
+    // R2+: persist prior roster (healed), same gold curve as player.
+    const enemy = (state.enemyPersist || emptyLanes()).map((stack) =>
+      stack.map((u) => healUnit(u))
+    );
+    let gold = START_GOLD + Math.min(3, state.round - 1);
+    let serviced = false;
+    let rolled = false;
+    let guard = 12;
+
+    while (guard-- > 0) {
+      const empty = [0, 1, 2].filter((i) => enemy[i].length === 0);
+      const covered = empty.length === 0;
+
+      // 1) Cover first
+      if (empty.length && gold >= BUY) {
+        const lane = empty[0];
+        enemy[lane].push(randomUnit());
+        gold -= BUY;
+        notes.push("AI buy → cover Lane " + (lane + 1) + " (" + BUY + "g).");
+        continue;
+      }
+
+      // 2) Service once if covered
+      if (covered && !serviced && gold >= SERVICE) {
+        const lane = weakestFrontLane(enemy);
+        if (lane >= 0 && aiServiceFront(enemy, lane, notes)) {
+          gold -= SERVICE;
+          serviced = true;
+          continue;
         }
       }
-      if (lane < 0) {
-        const open = [0, 1, 2].filter((i) => enemy[i].length < CAP);
-        if (!open.length) break;
-        open.sort((a, b) => enemy[a].length - enemy[b].length);
-        lane = open[0];
-        if (open.length > 1 && Math.random() < 0.45) lane = open[Math.floor(Math.random() * open.length)];
+
+      // 3) Stack into lost/weak lane
+      if (covered && gold >= BUY) {
+        const lane = pickStackLane(enemy);
+        if (lane >= 0) {
+          enemy[lane].push(randomUnit());
+          gold -= BUY;
+          notes.push("AI buy → stack Lane " + (lane + 1) + " (" + BUY + "g).");
+          continue;
+        }
       }
-      enemy[lane].push(u);
+
+      // 4) Fuse without abandoning coverage (0g); may free a slot then cover/stack next loop
+      if (covered) {
+        let fused = false;
+        for (let i = 0; i < 3; i++) {
+          if (!canFuseLane(enemy[i])) continue;
+          // Fuse only if board stays coverable: after fuse this lane has 1 unit, others still covered
+          const othersOk = [0, 1, 2].every((j) => j === i || enemy[j].length > 0);
+          if (!othersOk) continue;
+          if (aiFuseLane(enemy, i, notes)) {
+            fused = true;
+            break;
+          }
+        }
+        if (fused) continue;
+      }
+
+      // 5) Roll at most once — only if covered and spare gold beyond a buy
+      if (covered && !rolled && gold > BUY && gold >= ROLL) {
+        gold -= ROLL;
+        rolled = true;
+        notes.push("AI roll (1g) — shop refresh.");
+        continue;
+      }
+
+      break;
     }
-    if (enemy.filter(function (l) { return l.length > 0; }).length < 3) return enemy;
-    return enemy.map(function (stack) {
-      if (!canFuseLane(stack)) return stack;
-      const keep = Object.assign({}, stack[0]);
-      keep.veteran = true;
-      keep.atk += VET_ATK;
-      keep.maxHp += VET_HP;
-      keep.hp = keep.maxHp;
-      keep.name = "Veteran " + keep.name.replace(/^Veteran /, "");
-      return [keep];
-    });
+
+    // Safety: never leave an empty lane if leftover gold could have bought
+    for (let i = 0; i < 3; i++) {
+      if (enemy[i].length === 0 && gold >= BUY) {
+        enemy[i].push(randomUnit());
+        gold -= BUY;
+        notes.push("AI safety cover Lane " + (i + 1) + ".");
+      }
+    }
+
+    state.aiNotes = notes;
+    return enemy;
   }
 
   function snapshotLanes(lanes) {
@@ -816,11 +926,12 @@
     state.lastEnemy = snapshotLanes(state.enemy);
     state.log = [];
     log("— Round " + state.round + " fight —");
-    if (state.round === 1) {
-      log("AI R1 policy: 3 buys, 1-1-1 cover. Occupied " + state.enemy.filter((l) => l.length).length + "/3 lanes.");
-    } else {
-      log("AI cover-first. Occupied " + state.enemy.filter((l) => l.length).length + "/3 lanes.");
-    }
+    (state.aiNotes || []).forEach((n) => log(n));
+    log(
+      "AI board: " +
+        state.enemy.map((l, i) => "L" + (i + 1) + "=" + l.length).join(" ") +
+        "."
+    );
     el.shop.classList.add("hidden");
     render();
 
@@ -845,10 +956,28 @@
         "loss"
       );
     }
+    // Lanes AI lost this round (for next shop stack targeting)
+    state.aiLostLanes = [];
+    // Infer from scores: if you took 2+, you won most lanes — scan via last boards after resolve
+    // resolveCombat doesn't return per-lane; approximate from spend: mark lanes you occupied vs empty enemy post-fight log
+    // Use roundWin + enemy empty preference: store from a lightweight recount
+    state.aiLostLanes = reckonAiLostLanes(state.lastYou, state.lastEnemy);
+    state.enemyRoster = snapshotLanes(state.enemy);
     state.pendingRound = { roundWin };
     state.phase = "reveal";
     showSpendMap();
     render();
+  }
+
+  function reckonAiLostLanes(youSnap, enemySnap) {
+    const lost = [];
+    for (let i = 0; i < 3; i++) {
+      const y = youSnap[i] && youSnap[i].length;
+      const e = enemySnap[i] && enemySnap[i].length;
+      // Prefer stacking where AI was thin or player contested
+      if (y && (!e || lanePower(youSnap[i]) >= lanePower(enemySnap[i]))) lost.push(i);
+    }
+    return lost;
   }
 
   function afterReveal() {
@@ -865,13 +994,16 @@
     state.round += 1;
     state.gold = START_GOLD + Math.min(3, state.round - 1);
     state.lanes = state.lanes.map((stack) => stack.map((u) => healUnit(u)));
+    state.enemyPersist = (state.enemyRoster || state.enemy || emptyLanes()).map((stack) =>
+      stack.map((u) => healUnit(u))
+    );
     state.offers = rollOffers(false);
     freezeIdx = null;
     selectedOffer = null;
     state.enemy = emptyLanes();
     state.phase = "shop";
     el.shop.classList.remove("hidden");
-    log("Shop — Round " + state.round + ". Gold " + state.gold + ". Units persist (healed).");
+    log("Shop — Round " + state.round + ". Gold " + state.gold + ". Units persist (healed). AI persists too.");
     render();
   }
 
@@ -889,6 +1021,17 @@
   el.btnEnd.addEventListener("click", endTurnFight);
   el.btnNext.addEventListener("click", afterReveal);
   el.btnRematch.addEventListener("click", startRun);
+  if (el.btnTipDismiss && el.tip) {
+    try {
+      if (localStorage.getItem("las-tip-dismissed") === "1") el.tip.classList.add("hidden");
+    } catch (_) {}
+    el.btnTipDismiss.addEventListener("click", () => {
+      el.tip.classList.add("hidden");
+      try {
+        localStorage.setItem("las-tip-dismissed", "1");
+      } catch (_) {}
+    });
+  }
 
   startRun();
 })();

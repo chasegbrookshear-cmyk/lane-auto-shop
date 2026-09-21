@@ -76,3 +76,13 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .log div { margin-bottom: 4px; }
 .log .win { color: var(--good); }
 .log .loss { color: var(--bad); }
+
+.tip {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin: 0 0 12px; padding: 10px 12px; background: #1a2a1a; border: 1px solid var(--good);
+  border-radius: var(--radius); font-size: 0.9rem; line-height: 1.3;
+}
+.tip.hidden { display: none !important; }
+.tip button {
+  width: auto; margin: 0; padding: 8px 12px; flex-shrink: 0; background: var(--good); color: #061208;
+}
