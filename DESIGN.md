@@ -2,21 +2,21 @@
 
 Short MUST / MUST NOT for bots and humans. No full GDD.
 
-Current rules: 9g shop, 3g units, roll 1g, sell = full 3g refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses. Display names: Bumper, Rivet, Jack, Spotter, Sledge, Patch, Torque, Fender, Pit. Support is the partner slot. Fender Hurt splashes. Shop marks copies. AI fuses after 1-1-1. Combat ticks HP on the facing board.
+Current rules: 9g shop, units cost **1–4g**, roll 1g, sell = full printed-cost refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses (best of 5). 28 units in the 1–4 curve. Keywords: Shield, Venom, Double, Overkill. Support is the partner slot. Fender Hurt splashes. Shop marks copies. AI fuses after 1-1-1. Combat ticks HP on the facing board.
 
 ## 1) R1 AI shop — always fill 3
 
 **MUST**
-- Spend all 9g on **3 buys**. 0 rolls, 0 freeze, 0 leftover.
-- Place **1-1-1**. Coverage is the R1 objective, not EV or pairs.
-- Use the same 3g pool as the player. No R1 stat hacks.
+- Spend all 9g covering 3 lanes first (reserve 1g per remaining empty bay). Fill leftover. 0 rolls, 0 freeze. No R1 fuse. No R1 Service.
+- Place **coverage** on R1. 1-1-1 if three 3-costs; 2-2-2 is legal if leftover 1-costs fill.
+- Use the same gold pool as the player. No R1 stat hacks.
 - If you later simulate a real shop: greedy-buy until 3 lanes have a unit; only then may you roll.
 - Keep hidden-info (build at End Turn). Placement stays cover-first even if the player left a hole.
 - Spend map must show 3 occupied enemy lanes every R1.
 - After R1, persist the AI shop roster (healed) and spend the **same gold** as the player: cover, fill, fuse copies, Service leftover. No extra gold.
 
 **MUST NOT**
-- 2-1-0 / 2-0-1 / 3-unit stack on R1.
+- 2-1-0 / 2-0-1 on R1 (a hole).
 - Roll away the 3rd body.
 - Snipe a player-empty lane on R1.
 - End an R1 AI board with `<3` units.
@@ -62,6 +62,20 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST NOT** — Always let the player punch first.
 
 **MUST NOT (until A–E ship)** food, shop tiers, items, a bench, extra gold on triggers.
+
+## 1–4 gold curve (playtest)
+
+**MUST**
+- Shop rolls the 28-unit 1–4g pool. Printed cost is paid and refunded.
+- Keywords: **Shield** (first hit 0), **Venom** (damage faints), **Double** (two hits), **Overkill** (leftover to an adjacent enemy front).
+- R1 still cover 3. Cap stays 2. Run stays 3-and-3.
+- No Spec / Exodia pieces until 6g and 8g exist.
+
+**MUST NOT**
+- Flat 3g on every unit.
+- Incomplete 5-piece Exodia.
+- Ads on this web cut.
+
 
 ## 4) Support split — ship with the 9th role
 

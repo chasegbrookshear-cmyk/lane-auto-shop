@@ -1,14 +1,33 @@
 (() => {
   const UNITS = [
-    { id: "guard", name: "Bumper", atk: 2, hp: 5, trigger: "start", text: "Start: +1 ATK partner (self if solo)" },
-    { id: "skirmisher", name: "Rivet", atk: 2, hp: 4, trigger: "hurt", text: "Hurt: 1 to attacker, +1 HP partner (self if solo)" },
-    { id: "anchor", name: "Jack", atk: 1, hp: 6, trigger: "start", text: "Start: +2 HP partner (self if solo)" },
-    { id: "scout", name: "Spotter", atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "Faint: +1 HP adjacent lane" },
-    { id: "bruiser", name: "Sledge", atk: 4, hp: 2, trigger: "hurt", text: "Hurt: 1 to attacker" },
-    { id: "medic", name: "Patch", atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "Faint: +2 HP partner in this lane" },
-    { id: "blade", name: "Torque", atk: 3, hp: 2, trigger: "start", text: "Start: +2 ATK partner (+1 ATK if solo)" },
-    { id: "wall", name: "Fender", atk: 2, hp: 6, trigger: "hurt", text: "Hurt: 1 to attacker and 1 to an adjacent enemy front" },
-    { id: "crew", name: "Pit", atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "Faint: +1 ATK partner in this lane" },
+    { id: "lug", name: "Lug", cost: 1, atk: 1, hp: 1, trigger: "start", text: "1g · Start: +1 HP partner (self if solo)" },
+    { id: "cone", name: "Cone", cost: 1, atk: 0, hp: 3, text: "1g · Blocks. No ability." },
+    { id: "clip", name: "Clip", cost: 1, atk: 1, hp: 2, trigger: "faint", faintAim: "killer", text: "1g · Faint: 1 to whoever killed you" },
+    { id: "rag", name: "Rag", cost: 1, atk: 1, hp: 1, trigger: "hurt", text: "1g · Hurt: +1 ATK this fight" },
+    { id: "spark", name: "Spark", cost: 1, atk: 1, hp: 1, trigger: "faint", faintAim: "adjacent", text: "1g · Faint: adjacent bay front +1 ATK" },
+    { id: "drip", name: "Drip", cost: 1, atk: 1, hp: 2, trigger: "hurt", text: "1g · Hurt: +1 HP partner (self if solo)" },
+    { id: "wedge", name: "Wedge", cost: 1, atk: 1, hp: 2, trigger: "start", text: "1g · Start: jumps to front" },
+    { id: "cowl", name: "Cowl", cost: 2, atk: 1, hp: 4, shield: true, text: "2g · Shield (first hit does 0)" },
+    { id: "bit", name: "Bit", cost: 2, atk: 2, hp: 2, trigger: "hurt", text: "2g · Hurt: 1 to attacker" },
+    { id: "hose", name: "Hose", cost: 2, atk: 1, hp: 3, trigger: "start", text: "2g · Start: partner gains Shield (self if solo)" },
+    { id: "clamp", name: "Clamp", cost: 2, atk: 2, hp: 3, trigger: "start", text: "2g · Start: jumps to front, partner +1 HP" },
+    { id: "snap", name: "Snap", cost: 2, atk: 2, hp: 1, trigger: "faint", faintAim: "enemy", text: "2g · Faint: 2 to the enemy front in this bay" },
+    { id: "blink", name: "Blink", cost: 2, atk: 2, hp: 2, trigger: "start", text: "2g · Start: +1/+1 if you are solo in this bay" },
+    { id: "ragman", name: "Ragman", cost: 2, atk: 1, hp: 3, trigger: "hurt", text: "2g · Hurt: this bay partner +1 HP (self if solo)" },
+    { id: "guard", name: "Bumper", cost: 3, atk: 2, hp: 5, trigger: "start", text: "3g · Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Rivet", cost: 3, atk: 2, hp: 4, trigger: "hurt", text: "3g · Hurt: 1 to attacker, +1 HP partner (self if solo)" },
+    { id: "anchor", name: "Jack", cost: 3, atk: 1, hp: 6, trigger: "start", text: "3g · Start: +2 HP partner (self if solo)" },
+    { id: "scout", name: "Spotter", cost: 3, atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "3g · Faint: +1 HP adjacent lane" },
+    { id: "bruiser", name: "Sledge", cost: 3, atk: 4, hp: 2, trigger: "hurt", text: "3g · Hurt: 1 to attacker" },
+    { id: "medic", name: "Patch", cost: 3, atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "3g · Faint: +2 HP partner in this lane" },
+    { id: "blade", name: "Torque", cost: 3, atk: 3, hp: 2, trigger: "start", text: "3g · Start: +2 ATK partner (+1 ATK if solo)" },
+    { id: "wall", name: "Fender", cost: 3, atk: 2, hp: 6, trigger: "hurt", text: "3g · Hurt: 1 to attacker and 1 to an adjacent enemy front" },
+    { id: "crew", name: "Pit", cost: 3, atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "3g · Faint: +1 ATK partner in this lane" },
+    { id: "boom", name: "Boom", cost: 4, atk: 4, hp: 4, double: true, text: "4g · Double (hits twice)" },
+    { id: "apron", name: "Apron", cost: 4, atk: 2, hp: 5, trigger: "start", text: "4g · Start: Shield on both units in this bay" },
+    { id: "rail", name: "Rail", cost: 4, atk: 3, hp: 6, overkill: true, text: "4g · Overkill leftover to an adjacent enemy front" },
+    { id: "torch", name: "Torch", cost: 4, atk: 3, hp: 3, venom: true, text: "4g · Venom — damage faints them" },
+    { id: "dolly", name: "Dolly", cost: 4, atk: 2, hp: 4, trigger: "start", text: "4g · Start: if room, spawn a 1/1 Lug behind you" },
   ];
 
   const BUY = 3;
@@ -70,6 +89,11 @@
         trigger: u.trigger,
         faintAim: u.faintAim,
         text: u.text,
+        cost: u.cost,
+        shield: !!u.shield,
+        venom: !!u.venom,
+        double: !!u.double,
+        overkill: !!u.overkill,
         veteran: !!u.veteran,
       };
     }
@@ -83,6 +107,11 @@
       trigger: t.trigger,
       faintAim: t.faintAim,
       text: t.text,
+      cost: t.cost,
+      shield: !!t.shield,
+      venom: !!t.venom,
+      double: !!t.double,
+      overkill: !!t.overkill,
       veteran: false,
     };
   }
@@ -100,8 +129,14 @@
     );
   }
 
-  function randomUnit() {
-    return cloneUnit(UNITS[Math.floor(Math.random() * UNITS.length)]);
+  function unitCost(u) {
+    return (u && u.cost) || 3;
+  }
+  function randomUnit(maxGold) {
+    const cap = maxGold == null ? Infinity : maxGold;
+    const pool = UNITS.filter((u) => unitCost(u) <= cap);
+    const list = pool.length ? pool : UNITS;
+    return cloneUnit(list[Math.floor(Math.random() * list.length)]);
   }
 
   function emptyLanes() {
@@ -385,13 +420,14 @@
       render();
       return;
     }
-    if (state.gold < BUY) {
+    const offer = state.offers[selectedOffer];
+    const cost = (offer && offer.cost) || BUY;
+    if (state.gold < cost) {
       log("Not enough gold.");
       render();
       return;
     }
-    const offer = state.offers[selectedOffer];
-    state.gold -= BUY;
+    state.gold -= cost;
     state.lanes[i].push(cloneUnit(offer));
     state.offers[selectedOffer] = null;
     if (freezeIdx === selectedOffer) freezeIdx = null;
@@ -408,11 +444,13 @@
     if (state.phase !== "shop") return;
     const stack = state.lanes[lane];
     if (!stack[slot]) return;
-    const name = stack[slot].name;
+    const sold = stack[slot];
+    const name = sold.name;
+    const refund = sold.cost || BUY;
     stack.splice(slot, 1);
-    state.gold += BUY;
+    state.gold += refund;
     selectedOffer = null;
-    log("Sold " + name + " (+" + BUY + "g refund).");
+    log("Sold " + name + " (+" + refund + "g refund).");
     render();
   }
 
@@ -556,11 +594,12 @@
       const covered = empty.length === 0;
 
       // 1) Cover first
-      if (empty.length && gold >= BUY) {
+      if (empty.length && gold >= 1) {
         const lane = empty[0];
-        enemy[lane].push(randomUnit());
-        gold -= BUY;
-        notes.push("AI buy → cover Lane " + (lane + 1) + " (" + BUY + "g).");
+        const u = randomUnit(gold - (empty.length - 1));
+        enemy[lane].push(u);
+        gold -= unitCost(u);
+        notes.push("AI buy → cover Lane " + (lane + 1) + " (" + unitCost(u) + "g).");
         continue;
       }
 
@@ -575,13 +614,16 @@
       }
 
       // 3) Stack into lost/weak lane
-      if (covered && gold >= BUY) {
+      if (covered && gold >= 1) {
         const lane = pickStackLane(enemy);
         if (lane >= 0) {
-          enemy[lane].push(randomUnit());
-          gold -= BUY;
-          notes.push("AI buy → stack Lane " + (lane + 1) + " (" + BUY + "g).");
-          continue;
+          const u = randomUnit(gold);
+          if (unitCost(u) <= gold) {
+            enemy[lane].push(u);
+            gold -= unitCost(u);
+            notes.push("AI buy → stack Lane " + (lane + 1) + " (" + unitCost(u) + "g).");
+            continue;
+          }
         }
       }
 
@@ -614,9 +656,10 @@
 
     // Safety: never leave an empty lane if leftover gold could have bought
     for (let i = 0; i < 3; i++) {
-      if (enemy[i].length === 0 && gold >= BUY) {
-        enemy[i].push(randomUnit());
-        gold -= BUY;
+      if (enemy[i].length === 0 && gold >= 1) {
+        const u = randomUnit(gold);
+        enemy[i].push(u);
+        gold -= unitCost(u);
         notes.push("AI safety cover Lane " + (i + 1) + ".");
       }
     }
@@ -717,6 +760,7 @@
         );
         return;
       }
+      if (u.id !== "guard" && u.id !== "blade" && u.id !== "anchor") return;
       const amt = u.id === "blade" && partner ? 2 : 1;
       target.atk += amt;
       log(
