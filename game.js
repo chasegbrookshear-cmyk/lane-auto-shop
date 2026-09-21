@@ -190,8 +190,9 @@
 
     const placed = countUnits(state.lanes);
     el.btnRoll.disabled = state.phase !== "shop" || state.gold < ROLL;
-    el.btnEnd.disabled = state.phase !== "shop" || placed < 1;
-    el.btnEnd.title = placed < 1 ? "Place at least 1 unit before fighting" : "";
+    const holes = state.lanes.filter((l) => !l.length).length;
+    el.btnEnd.disabled = state.phase !== "shop" || placed < 1 || (state.round === 1 && holes > 0);
+    el.btnEnd.title = state.round === 1 && holes > 0 ? "Cover all 3 lanes before the first fight" : placed < 1 ? "Place at least 1 unit before fighting" : "";
 
     el.board.innerHTML = "";
     el.enemy.innerHTML = "";
@@ -975,6 +976,11 @@
       render();
       return;
     }
+    if (state.round === 1 && state.lanes.some((l) => !l.length)) {
+      log("Cover all 3 lanes before the first fight.");
+      render();
+      return;
+    }
     state.phase = "fight";
     state.enemy = buildEnemy();
     state.lastYou = snapshotLanes(state.lanes);
@@ -1052,13 +1058,13 @@
     state.enemyPersist = (state.enemyRoster || state.enemy || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
     );
-    state.offers = rollOffers(false);
-    freezeIdx = null;
+    state.offers = rollOffers(true);
+    if (freezeIdx === null || !state.offers[freezeIdx]) freezeIdx = null;
     selectedOffer = null;
     state.enemy = emptyLanes();
     state.phase = "shop";
     el.shop.classList.remove("hidden");
-    log("Shop — Round " + state.round + ". Gold " + state.gold + ". Units persist (healed). AI persists too.");
+    log("Shop — Round " + state.round + ". Gold " + state.gold + ". Units persist (healed). AI persists too." + (freezeIdx !== null ? " Frozen offer held." : ""));
     render();
   }
 
