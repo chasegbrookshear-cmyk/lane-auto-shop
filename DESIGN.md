@@ -67,6 +67,7 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 
 **MUST**
 - Shop rolls the 28-unit 1–4g pool. Printed cost is paid and refunded.
+- **Round 1 shop and AI pool cap at 3g.** 4-drops (Boom, Apron, Rail, Torch, Dolly) enter **round 2**.
 - Keywords: **Shield** (first hit 0), **Venom** (damage faints), **Double** (two hits), **Overkill** (leftover to an adjacent enemy front).
 - R1 still cover 3. Cap stays 2. Run stays 3-and-3.
 - No Spec / Exodia pieces until 6g and 8g exist.

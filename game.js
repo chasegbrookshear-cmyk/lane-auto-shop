@@ -147,11 +147,15 @@
     return lanes.reduce((n, stack) => n + stack.length, 0);
   }
 
+  function shopCap() {
+    return (state && state.round > 1) ? 4 : 3;
+  }
   function rollOffers(keepFrozen) {
     const next = [];
+    const cap = shopCap();
     for (let i = 0; i < 4; i++) {
       if (keepFrozen && freezeIdx === i && state.offers[i]) next.push(state.offers[i]);
-      else next.push(randomUnit());
+      else next.push(randomUnit(cap));
     }
     return next;
   }
@@ -574,7 +578,7 @@
     // R1 sacred: 9g → 3 buys → 1-1-1. No Service/Fuse/rolls/stat hacks.
     if (state.round === 1) {
       const enemy = emptyLanes();
-      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit());
+      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit(3));
       notes.push("AI R1: 3 buys, 1-1-1 cover (same 9g).");
       state.aiNotes = notes;
       return enemy;
