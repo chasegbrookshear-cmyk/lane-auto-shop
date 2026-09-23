@@ -210,7 +210,7 @@
           '<span class="name">' +
           u.name +
           " · " +
-          BUY +
+          unitCost(u) +
           "g" +
           (isCopyOffer(u, state.lanes) ? " · COPY" : "") +
           "</span><span class=\"meta\">" +
@@ -300,12 +300,12 @@
           "</span>" +
           (mine && state.phase === "shop"
             ? '<span class="unit-acts">' +
-              '<button type="button" class="act" data-sell>Sell ' +
-              BUY +
+              '<button type="button" class="act" data-sell>Sell refund ' +
+              unitCost(unit) +
               "g</button>" +
               '<button type="button" class="act" data-svc' +
               (state.gold < SERVICE ? " disabled" : "") +
-              ">Svc " +
+              ">Service " +
               SERVICE +
               "g</button></span>"
             : "");
@@ -989,11 +989,17 @@
     );
   }
 
+  function laneSpend(stack) {
+    return (stack || []).reduce((n, u) => n + unitCost(u), 0);
+  }
+
   function showSpendMap() {
     el.spendMap.innerHTML = "";
     for (let i = 0; i < 3; i++) {
       const youN = state.lastYou[i].length;
       const enN = state.lastEnemy[i].length;
+      const youG = laneSpend(state.lastYou[i]);
+      const enG = laneSpend(state.lastEnemy[i]);
       const box = document.createElement("div");
       box.className = "spend-lane";
       box.innerHTML =
@@ -1001,10 +1007,12 @@
         (i + 1) +
         " — you " +
         youN +
-        " · them " +
+        " (" +
+        youG +
+        "g) · them " +
         enN +
-        " (≈" +
-        enN * BUY +
+        " (" +
+        enG +
         "g)</div>" +
         '<div class="spend-cols"><div><div class="side">You</div>' +
         unitListHtml(state.lastYou[i]) +
