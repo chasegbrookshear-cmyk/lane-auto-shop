@@ -33,7 +33,7 @@
   const BUY = 3;
   const ROLL = 1;
   const SERVICE = 3;
-  const START_GOLD = 9;
+  const START_GOLD = 6;
   const CAP = 2;
   const VET_ATK = 1;
   const VET_HP = 2;
@@ -150,11 +150,21 @@
     return lanes.reduce((n, stack) => n + stack.length, 0);
   }
 
+  function shopCap() {
+    const r = state && state.round ? state.round : 1;
+    if (r <= 2) return 2;
+    if (r <= 4) return 3;
+    return 4;
+  }
+  function roundGold() {
+    const r = state && state.round ? state.round : 1;
+    return Math.min(12, START_GOLD + Math.max(0, r - 1));
+  }
   function rollOffers(keepFrozen) {
     const next = [];
     for (let i = 0; i < 4; i++) {
       if (keepFrozen && freezeIdx === i && state.offers[i]) next.push(state.offers[i]);
-      else next.push(randomUnit(4));
+      else next.push(randomUnit(shopCap()));
     }
     return next;
   }
@@ -574,11 +584,11 @@
 
   function buildEnemy() {
     const notes = [];
-    // R1 sacred: 9g → 3 buys → 1-1-1. No Service/Fuse/rolls/stat hacks.
+    // R1: 6g, 1–2g only, cover 3 lanes. No Service/Fuse/rolls/stat hacks.
     if (state.round === 1) {
       const enemy = emptyLanes();
-      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit(4));
-      notes.push("AI R1: 3 buys, 1-1-1 cover (same 9g).");
+      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit(shopCap()));
+      notes.push("AI R1: 3 buys, 1-1-1 cover (6g, costs 1–2).");
       state.aiNotes = notes;
       return enemy;
     }
@@ -587,7 +597,7 @@
     const enemy = (state.enemyPersist || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
     );
-    let gold = START_GOLD + Math.min(3, state.round - 1);
+    let gold = roundGold();
     let serviced = false;
     let rolled = false;
     let guard = 12;
@@ -599,7 +609,7 @@
       // 1) Cover first
       if (empty.length && gold >= 1) {
         const lane = empty[0];
-        const u = randomUnit(gold - (empty.length - 1));
+        const u = randomUnit(Math.min(gold - (empty.length - 1), shopCap()));
         enemy[lane].push(u);
         gold -= unitCost(u);
         notes.push("AI buy → cover Lane " + (lane + 1) + " (" + unitCost(u) + "g).");
@@ -620,7 +630,7 @@
       if (covered && gold >= 1) {
         const lane = pickStackLane(enemy);
         if (lane >= 0) {
-          const u = randomUnit(gold);
+          const u = randomUnit(Math.min(gold, shopCap()));
           if (unitCost(u) <= gold) {
             enemy[lane].push(u);
             gold -= unitCost(u);
@@ -660,7 +670,7 @@
     // Safety: never leave an empty lane if leftover gold could have bought
     for (let i = 0; i < 3; i++) {
       if (enemy[i].length === 0 && gold >= 1) {
-        const u = randomUnit(gold);
+        const u = randomUnit(Math.min(gold, shopCap()));
         enemy[i].push(u);
         gold -= unitCost(u);
         notes.push("AI safety cover Lane " + (i + 1) + ".");
@@ -1399,11 +1409,11 @@
     state.enemyRoster = snapshotLanes(state.enemy);
     state.pendingRound = { roundWin };
     // Cut #3: run over → Rematch primary immediately (no Next shop gate)
-    if (state.wins >= 3) {
+    if (state.wins >= 6) {
       showEnd(true, "You won the run " + state.wins + "–" + state.losses + ".");
       return;
     }
-    if (state.losses >= 3) {
+    if (state.losses >= 5) {
       showEnd(false, "Run over " + state.wins + "–" + state.losses + ".");
       return;
     }
@@ -1425,17 +1435,17 @@
 
   function afterReveal() {
     el.spendWrap.classList.add("hidden");
-    if (state.wins >= 3) {
+    if (state.wins >= 6) {
       showEnd(true, "You won the run " + state.wins + "–" + state.losses + ".");
       return;
     }
-    if (state.losses >= 3) {
+    if (state.losses >= 5) {
       showEnd(false, "Run over " + state.wins + "–" + state.losses + ".");
       return;
     }
     // Persist + full heal; refresh shop gold
     state.round += 1;
-    state.gold = START_GOLD + Math.min(3, state.round - 1);
+    state.gold = roundGold();
     state.lanes = state.lanes.map((stack) => stack.map((u) => healUnit(u)));
     state.enemyPersist = (state.enemyRoster || state.enemy || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
