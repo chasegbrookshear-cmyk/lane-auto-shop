@@ -66,8 +66,9 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 ## 1–4 gold curve (playtest)
 
 **MUST**
-- Shop rolls the 28-unit 1–4g pool. Printed cost is paid and refunded.
-- **Round 1 shop and AI pool cap at 3g.** 4-drops (Boom, Apron, Rail, Torch, Dolly) enter **round 2**.
+- Shop rolls 1–4g with **equal odds per price**, then a random unit at that price. Printed cost is paid and refunded. Start gold stays **9**.
+- 4-drops are legal on round 1. Cover still has to fit in 9g (a 4 leaves room for a 3 and a 2, or a 4, a 4, and a 1).
+- Higher costs later (5–10) need more starting gold or a longer gold curve. Do not add them on 9g.
 - Keywords: **Shield** (first hit 0), **Venom** (damage faints), **Double** (two hits), **Overkill** (leftover to an adjacent enemy front).
 - R1 still cover 3. Cap stays 2. Run stays 3-and-3.
 - No Spec / Exodia pieces until 6g and 8g exist.
@@ -76,6 +77,7 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - Flat 3g on every unit.
 - Incomplete 5-piece Exodia.
 - Ads on this web cut.
+- Interest. Runs are 3–5 fights and leftover gold is 1–2. Saving pays nothing yet. Revisit when 6g+ units exist and games are long enough to bank.
 
 
 ## 4) Support split — ship with the 9th role
