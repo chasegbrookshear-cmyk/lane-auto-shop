@@ -675,113 +675,6 @@
     return lanes.map((stack) => stack.map((u) => cloneUnit(u)));
   }
 
-  function applyFaint(side, laneIdx, unit, boards) {
-    if (!unit || unit.trigger !== "faint") return;
-    const board = side === "you" ? boards.you : boards.enemy;
-    const prefix = side === "you" ? "" : "enemy ";
-    const aim = unit.faintAim || "adjacent";
-    let ally = null;
-    let allyLane = laneIdx;
-    if (aim === "partner") {
-      ally = board[laneIdx].find((o) => o !== unit && o.hp > 0) || null;
-      if (!ally) {
-        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no partner.");
-        return;
-      }
-    } else {
-      const adj = [laneIdx - 1, laneIdx + 1].filter(
-        (j) => j >= 0 && j < 3 && board[j].some((u) => u.hp > 0)
-      );
-      if (!adj.length) {
-        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no adjacent ally.");
-        return;
-      }
-      allyLane = adj[0];
-      ally = board[allyLane].find((u) => u.hp > 0);
-      if (!ally) return;
-    }
-    const where = aim === "partner" ? "partner" : "Lane " + (allyLane + 1);
-    if (unit.id === "crew") {
-      ally.atk += 1;
-      log(
-        "Lane " +
-          (laneIdx + 1) +
-          ": " +
-          prefix +
-          unit.name +
-          " Faint → +1 ATK " +
-          where +
-          " " +
-          ally.name +
-          " (" +
-          ally.atk +
-          ").",
-        "win"
-      );
-      return;
-    }
-    const amt = unit.id === "medic" ? 2 : 1;
-    ally.hp += amt;
-    log(
-      "Lane " +
-        (laneIdx + 1) +
-        ": " +
-        prefix +
-        unit.name +
-        " Faint → +" +
-        amt +
-        " HP " +
-        where +
-        " " +
-        ally.name +
-        " (" +
-        ally.hp +
-        " HP).",
-      "win"
-    );
-  }
-
-  function applyStartBuff(lane, laneIdx, prefix) {
-    lane.forEach((u) => {
-      if (u.trigger !== "start" || u.hp <= 0) return;
-      const partner = lane.find((o) => o !== u && o.hp > 0);
-      const target = partner || u;
-      const who = partner ? target.name : "self";
-      if (u.id === "anchor") {
-        target.hp += 2;
-        log(
-          "Lane " +
-            (laneIdx + 1) +
-            ": " +
-            prefix +
-            u.name +
-            " Start → +2 HP " +
-            who +
-            " (" +
-            target.hp +
-            " HP)."
-        );
-        return;
-      }
-      if (u.id !== "guard" && u.id !== "blade" && u.id !== "anchor") return;
-      const amt = u.id === "blade" && partner ? 2 : 1;
-      target.atk += amt;
-      log(
-        "Lane " +
-          (laneIdx + 1) +
-          ": " +
-          prefix +
-          u.name +
-          " Start → +" +
-          amt +
-          " ATK " +
-          who +
-          " (" +
-          target.atk +
-          ")."
-      );
-    });
-  }
 
   function front(stack) {
     return stack.find((u) => u.hp > 0) || null;
@@ -811,65 +704,474 @@
     });
   }
 
-  function applyHurt(hurter, hurterSide, laneIdx, attacker, boards, faintUnit) {
-    if (!hurter || hurter.trigger !== "hurt" || hurter.hp <= 0) return;
-    attacker.hp -= 1;
+  function partnerOf(lane, unit) {
+    return lane.find(function (o) {
+      return o !== unit && o.hp > 0;
+    }) || null;
+  }
+
+  function moveToFront(lane, unit) {
+    const idx = lane.indexOf(unit);
+    if (idx <= 0) return false;
+    lane.splice(idx, 1);
+    lane.unshift(unit);
+    return true;
+  }
+
+  function adjacentFront(board, laneIdx) {
+    const order = [laneIdx - 1, laneIdx + 1, laneIdx - 2, laneIdx + 2];
+    for (let k = 0; k < order.length; k++) {
+      const j = order[k];
+      if (j < 0 || j >= 3) continue;
+      const f = front(board[j]);
+      if (f) return { lane: j, unit: f };
+    }
+    return null;
+  }
+
+  function applyFaint(side, laneIdx, unit, boards, killer) {
+    if (!unit || unit.trigger !== "faint") return;
+    const board = side === "you" ? boards.you : boards.enemy;
+    const enemyBoard = side === "you" ? boards.enemy : boards.you;
+    const prefix = side === "you" ? "" : "enemy ";
+    const aim = unit.faintAim || "partner";
+
+    if (aim === "killer") {
+      if (!killer || killer.hp <= 0) {
+        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no killer.");
+        return;
+      }
+      killer.hp -= 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          unit.name +
+          " Faint → 1 to killer " +
+          killer.name +
+          " (" +
+          Math.max(0, killer.hp) +
+          " HP)."
+      );
+      return;
+    }
+
+    if (aim === "enemy") {
+      const foe = front(enemyBoard[laneIdx]);
+      if (!foe) {
+        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no enemy front.");
+        return;
+      }
+      const dmg = unit.id === "snap" ? 2 : 1;
+      foe.hp -= dmg;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          unit.name +
+          " Faint → " +
+          dmg +
+          " to enemy " +
+          foe.name +
+          " (" +
+          Math.max(0, foe.hp) +
+          " HP)."
+      );
+      return;
+    }
+
+    if (aim === "adjacent") {
+      const hit = adjacentFront(board, laneIdx);
+      if (!hit) {
+        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no adjacent ally.");
+        return;
+      }
+      if (unit.id === "spark") {
+        hit.unit.atk += 1;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            unit.name +
+            " Faint → +1 ATK Lane " +
+            (hit.lane + 1) +
+            " " +
+            hit.unit.name +
+            " (" +
+            hit.unit.atk +
+            ")."
+        );
+      } else {
+        hit.unit.hp += 1;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            unit.name +
+            " Faint → +1 HP Lane " +
+            (hit.lane + 1) +
+            " " +
+            hit.unit.name +
+            " (" +
+            hit.unit.hp +
+            " HP)."
+        );
+      }
+      return;
+    }
+
+    // partner (medic, crew, default)
+    const ally = partnerOf(board[laneIdx], unit);
+    if (!ally) {
+      log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no partner.");
+      return;
+    }
+    if (unit.id === "crew") {
+      ally.atk += 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          unit.name +
+          " Faint → +1 ATK partner " +
+          ally.name +
+          " (" +
+          ally.atk +
+          ")."
+      );
+      return;
+    }
+    const amt = unit.id === "medic" ? 2 : 1;
+    ally.hp += amt;
     log(
       "Lane " +
         (laneIdx + 1) +
         ": " +
-        hurter.name +
-        " Hurt → 1 to " +
-        attacker.name +
+        prefix +
+        unit.name +
+        " Faint → +" +
+        amt +
+        " HP partner " +
+        ally.name +
         " (" +
-        Math.max(0, attacker.hp) +
+        ally.hp +
         " HP)."
     );
-    if (hurter.id === "skirmisher") {
-      const board = hurterSide === "you" ? boards.you : boards.enemy;
-      const partner = board[laneIdx].find(function (o) {
-        return o !== hurter && o.hp > 0;
-      });
+  }
+
+  function applyStartBuff(lane, laneIdx, prefix) {
+    // Snapshot so Dolly spawn / reorder mid-pass stays stable.
+    const starters = lane.filter(function (u) {
+      return u.trigger === "start" && u.hp > 0;
+    });
+    starters.forEach(function (u) {
+      if (lane.indexOf(u) < 0 || u.hp <= 0) return;
+      const partner = partnerOf(lane, u);
+      const target = partner || u;
+      const who = partner ? target.name : "self";
+
+      if (u.id === "lug") {
+        target.hp += 1;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → +1 HP " +
+            who +
+            " (" +
+            target.hp +
+            " HP)."
+        );
+        return;
+      }
+      if (u.id === "wedge") {
+        const moved = moveToFront(lane, u);
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → jumps to front" +
+            (moved ? "." : " (already front).")
+        );
+        return;
+      }
+      if (u.id === "hose") {
+        target.shield = true;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → Shield on " +
+            who +
+            "."
+        );
+        return;
+      }
+      if (u.id === "clamp") {
+        moveToFront(lane, u);
+        target.hp += 1;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → front + +1 HP " +
+            who +
+            " (" +
+            target.hp +
+            " HP)."
+        );
+        return;
+      }
+      if (u.id === "blink") {
+        if (partner) {
+          log(
+            "Lane " +
+              (laneIdx + 1) +
+              ": " +
+              prefix +
+              u.name +
+              " Start — not solo, no buff."
+          );
+          return;
+        }
+        u.atk += 1;
+        u.hp += 1;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → +1/+1 solo (" +
+            u.atk +
+            "/" +
+            u.hp +
+            ")."
+        );
+        return;
+      }
+      if (u.id === "guard") {
+        target.atk += 1;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → +1 ATK " +
+            who +
+            " (" +
+            target.atk +
+            ")."
+        );
+        return;
+      }
+      if (u.id === "anchor") {
+        target.hp += 2;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → +2 HP " +
+            who +
+            " (" +
+            target.hp +
+            " HP)."
+        );
+        return;
+      }
+      if (u.id === "blade") {
+        const amt = partner ? 2 : 1;
+        target.atk += amt;
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → +" +
+            amt +
+            " ATK " +
+            who +
+            " (" +
+            target.atk +
+            ")."
+        );
+        return;
+      }
+      if (u.id === "apron") {
+        lane.forEach(function (ally) {
+          if (ally.hp > 0) ally.shield = true;
+        });
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → Shield on both in bay."
+        );
+        return;
+      }
+      if (u.id === "dolly") {
+        if (lane.length >= CAP) {
+          log(
+            "Lane " +
+              (laneIdx + 1) +
+              ": " +
+              prefix +
+              u.name +
+              " Start — bay full, no Lug."
+          );
+          return;
+        }
+        const lug = cloneUnit({ id: "lug" });
+        lug.atk = 1;
+        lug.hp = 1;
+        lug.maxHp = 1;
+        lug.trigger = undefined;
+        lug.text = "1/1 spawn";
+        lane.push(lug);
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            u.name +
+            " Start → spawn Lug 1/1 behind."
+        );
+        return;
+      }
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          u.name +
+          " Start — no handler."
+      );
+    });
+  }
+
+  function applyHurt(hurter, hurterSide, laneIdx, attacker, boards, faintUnit) {
+    if (!hurter || hurter.trigger !== "hurt" || hurter.hp <= 0) return;
+    const board = hurterSide === "you" ? boards.you : boards.enemy;
+    const prefix = hurterSide === "you" ? "" : "enemy ";
+    const partner = partnerOf(board[laneIdx], hurter);
+
+    if (hurter.id === "rag") {
+      hurter.atk += 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          hurter.name +
+          " Hurt → +1 ATK (" +
+          hurter.atk +
+          ")."
+      );
+      return;
+    }
+    if (hurter.id === "drip" || hurter.id === "ragman") {
       const healed = partner || hurter;
       healed.hp += 1;
       log(
         "Lane " +
           (laneIdx + 1) +
           ": " +
+          prefix +
           hurter.name +
           " Hurt → +1 HP " +
           (partner ? healed.name : "self") +
           " (" +
           healed.hp +
-          " HP).",
-        "win"
+          " HP)."
       );
-    }
-    if (hurter.id !== "wall") return;
-    const enemyBoard = hurterSide === "you" ? boards.enemy : boards.you;
-    const splashSide = hurterSide === "you" ? "enemy" : "you";
-    const prefix = hurterSide === "you" ? "" : "enemy ";
-    const hit = pickSplashTarget(laneIdx, enemyBoard);
-    if (!hit) {
-      log("Lane " + (laneIdx + 1) + ": " + prefix + hurter.name + " Hurt — no adjacent enemy.");
       return;
     }
-    hit.unit.hp -= 1;
-    log(
-      "Lane " +
-        (laneIdx + 1) +
-        ": " +
-        prefix +
-        hurter.name +
-        " Hurt splash → Lane " +
-        (hit.lane + 1) +
-        " " +
-        hit.unit.name +
-        " (" +
-        Math.max(0, hit.unit.hp) +
-        " HP)."
-    );
-    if (hit.unit.hp <= 0) faintUnit(splashSide, hit.unit, hit.lane);
+
+    // bit, skirmisher, bruiser, wall: ping attacker
+    if (attacker && attacker.hp > 0) {
+      attacker.hp -= 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          hurter.name +
+          " Hurt → 1 to " +
+          attacker.name +
+          " (" +
+          Math.max(0, attacker.hp) +
+          " HP)."
+      );
+    }
+
+    if (hurter.id === "skirmisher") {
+      const healed = partner || hurter;
+      healed.hp += 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          hurter.name +
+          " Hurt → +1 HP " +
+          (partner ? healed.name : "self") +
+          " (" +
+          healed.hp +
+          " HP)."
+      );
+    }
+
+    if (hurter.id === "wall") {
+      const enemyBoard = hurterSide === "you" ? boards.enemy : boards.you;
+      const splashSide = hurterSide === "you" ? "enemy" : "you";
+      const hit = pickSplashTarget(laneIdx, enemyBoard);
+      if (!hit) {
+        log(
+          "Lane " +
+            (laneIdx + 1) +
+            ": " +
+            prefix +
+            hurter.name +
+            " Hurt — no adjacent enemy."
+        );
+        return;
+      }
+      hit.unit.hp -= 1;
+      log(
+        "Lane " +
+          (laneIdx + 1) +
+          ": " +
+          prefix +
+          hurter.name +
+          " Hurt splash → Lane " +
+          (hit.lane + 1) +
+          " " +
+          hit.unit.name +
+          " (" +
+          Math.max(0, hit.unit.hp) +
+          " HP)."
+      );
+      if (hit.unit.hp <= 0) faintUnit(splashSide, hit.unit, hit.lane, hurter);
+    }
   }
 
   function resolveCombat(youSnap, enemySnap) {
@@ -885,12 +1187,12 @@
 
     let guard = 80;
     const fainted = [];
-    function faintUnit(side, unit, laneIdx) {
+    function faintUnit(side, unit, laneIdx, killer) {
       if (unit.hp > 0 || fainted.indexOf(unit) >= 0) return;
       fainted.push(unit);
       const prefix = side === "you" ? "" : "enemy ";
       log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " faints.");
-      applyFaint(side, laneIdx, unit, boards);
+      applyFaint(side, laneIdx, unit, boards, killer);
       const nxt = front(side === "you" ? boards.you[laneIdx] : boards.enemy[laneIdx]);
       if (nxt) log("Lane " + (laneIdx + 1) + ": " + prefix + nxt.name + " steps up.");
     }
@@ -903,23 +1205,38 @@
         any = true;
 
         function swing(att, def, attSide, defSide) {
-          def.hp -= att.atk;
-          log(
-            "Lane " +
-              (i + 1) +
-              ": " +
-              att.name +
-              " hits " +
-              def.name +
-              " for " +
-              att.atk +
-              " → " +
-              Math.max(0, def.hp) +
-              " HP."
-          );
-          if (def.hp > 0) applyHurt(def, defSide, i, att, boards, faintUnit);
-          faintUnit(defSide, def, i);
-          faintUnit(attSide, att, i);
+          let dmg = att.atk;
+          if (def.shield) {
+            def.shield = false;
+            dmg = 0;
+            log(
+              "Lane " +
+                (i + 1) +
+                ": " +
+                att.name +
+                " hits " +
+                def.name +
+                " — Shield blocks (0 dmg)."
+            );
+          } else {
+            def.hp -= dmg;
+            log(
+              "Lane " +
+                (i + 1) +
+                ": " +
+                att.name +
+                " hits " +
+                def.name +
+                " for " +
+                dmg +
+                " → " +
+                Math.max(0, def.hp) +
+                " HP."
+            );
+          }
+          if (def.hp > 0 && dmg > 0) applyHurt(def, defSide, i, att, boards, faintUnit);
+          faintUnit(defSide, def, i, att);
+          faintUnit(attSide, att, i, def);
         }
 
         if (a.atk >= b.atk) {
