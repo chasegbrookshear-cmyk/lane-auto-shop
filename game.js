@@ -1338,6 +1338,7 @@
         "</div></div>";
       el.spendMap.appendChild(box);
     }
+    if (el.btnNext) el.btnNext.classList.remove("hidden");
     el.spendWrap.classList.remove("hidden");
   }
 
@@ -1397,6 +1398,15 @@
     state.aiLostLanes = reckonAiLostLanes(state.lastYou, state.lastEnemy);
     state.enemyRoster = snapshotLanes(state.enemy);
     state.pendingRound = { roundWin };
+    // Cut #3: run over → Rematch primary immediately (no Next shop gate)
+    if (state.wins >= 3) {
+      showEnd(true, "You won the run " + state.wins + "–" + state.losses + ".");
+      return;
+    }
+    if (state.losses >= 3) {
+      showEnd(false, "Run over " + state.wins + "–" + state.losses + ".");
+      return;
+    }
     state.phase = "reveal";
     showSpendMap();
     render();
@@ -1444,9 +1454,14 @@
     state.phase = "end";
     el.shop.classList.add("hidden");
     el.spendWrap.classList.add("hidden");
+    if (el.btnNext) el.btnNext.classList.add("hidden");
     el.end.classList.remove("hidden");
     el.endTitle.textContent = won ? "Run cleared!" : "Run failed";
     el.endDetail.textContent = detail;
+    if (el.btnRematch) {
+      el.btnRematch.textContent = "New run / Rematch";
+      el.btnRematch.classList.add("primary", "rematch-cta");
+    }
     render();
   }
 
