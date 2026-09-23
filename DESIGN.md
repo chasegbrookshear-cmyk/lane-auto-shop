@@ -47,8 +47,9 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 
 **Run length**
 - **MUST** — First to **6** wins. Out at **5** losses. A sweep is 6 fights. A close game lasts up to **10**. Round still won on 2 of 3 lanes.
-- **MUST** — Gold is 6, then +1 a round, stop at 12. Same number for the AI.
-- **MUST NOT** — End the run at 3–3. Don’t add interest until this length has been played.
+- **MUST** — Gold is 6, then +1 a round, stop at 12. Same paycheck for the AI.
+- **MUST** — Unspent gold carries. You can keep **6**. Keep 3–5 and next round pays **+1**. Keep 6 and it pays **+2**. Never more than +2. Gold over 6 is lost at end of turn. The AI's leftover uses the same bank.
+- **MUST NOT** — End the run at 3–3. Don’t wipe leftover gold. Don’t pay interest on gold you already lost to the cap.
 
 **Shop copy tell**
 - **MUST** — If a shop offer’s role is already on the player board, mark it **Copy**. Information only.
@@ -62,7 +63,7 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST** — The fighting front with **higher ATK** swings first. Ties go to you. Swap/Move now aim the seam.
 - **MUST NOT** — Always let the player punch first.
 
-**MUST NOT (until the 10-fight length feels right)** food, items, a bench, extra gold on triggers, interest.
+**MUST NOT (until the 10-fight length feels right)** food, items, a bench, extra gold on triggers.
 
 ## 1–4 gold curve (playtest)
 
@@ -78,7 +79,6 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - Flat 3g on every unit.
 - Incomplete 5-piece Exodia.
 - Ads on this web cut.
-- Interest. A 10-fight run is long enough to try it next, but not in this cut. Saving has to be tested after the price locks feel fair.
 
 
 ## 4) Support split — ship with the 9th role

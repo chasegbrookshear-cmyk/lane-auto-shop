@@ -160,6 +160,19 @@
     const r = state && state.round ? state.round : 1;
     return Math.min(12, START_GOLD + Math.max(0, r - 1));
   }
+  function bankedGold(unspent) {
+    return Math.max(0, Math.min(6, unspent || 0));
+  }
+  function interestOn(unspent) {
+    const kept = bankedGold(unspent);
+    if (kept >= 6) return 2;
+    if (kept >= 3) return 1;
+    return 0;
+  }
+  function nextShopGold(round, unspent) {
+    const pay = Math.min(12, START_GOLD + Math.max(0, round - 1));
+    return pay + bankedGold(unspent) + interestOn(unspent);
+  }
   function rollOffers(keepFrozen) {
     const next = [];
     for (let i = 0; i < 4; i++) {
@@ -172,6 +185,7 @@
   function startRun() {
     state = {
       gold: START_GOLD,
+      aiUnspent: 0,
       round: 1,
       wins: 0,
       losses: 0,
@@ -587,8 +601,14 @@
     // R1: 6g, 1–2g only, cover 3 lanes. No Service/Fuse/rolls/stat hacks.
     if (state.round === 1) {
       const enemy = emptyLanes();
-      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit(shopCap()));
-      notes.push("AI R1: 3 buys, 1-1-1 cover (6g, costs 1–2).");
+      let spent = 0;
+      for (let i = 0; i < 3; i++) {
+        const u = randomUnit(shopCap());
+        enemy[i].push(u);
+        spent += unitCost(u);
+      }
+      state.aiUnspent = Math.max(0, 6 - spent);
+      notes.push("AI R1: 3 buys, 1-1-1 cover (6g, costs 1–2). Bank " + state.aiUnspent + ".");
       state.aiNotes = notes;
       return enemy;
     }
@@ -597,7 +617,7 @@
     const enemy = (state.enemyPersist || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
     );
-    let gold = roundGold();
+    let gold = nextShopGold(state.round, state.aiUnspent || 0);
     let serviced = false;
     let rolled = false;
     let guard = 12;
@@ -677,6 +697,7 @@
       }
     }
 
+    state.aiUnspent = Math.max(0, gold);
     state.aiNotes = notes;
     return enemy;
   }
@@ -1444,8 +1465,13 @@
       return;
     }
     // Persist + full heal; refresh shop gold
+    const unspent = state.gold;
     state.round += 1;
-    state.gold = roundGold();
+    const kept = bankedGold(unspent);
+    const bonus = interestOn(unspent);
+    const wasted = Math.max(0, unspent - kept);
+    state.gold = roundGold() + kept + bonus;
+    state.bankNote = wasted ? (wasted + "g over the bank of 6 was lost.") : "";
     state.lanes = state.lanes.map((stack) => stack.map((u) => healUnit(u)));
     state.enemyPersist = (state.enemyRoster || state.enemy || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
@@ -1456,7 +1482,7 @@
     state.enemy = emptyLanes();
     state.phase = "shop";
     el.shop.classList.remove("hidden");
-    log("Shop — Round " + state.round + ". Gold " + state.gold + ". Units persist (healed). AI persists too." + (freezeIdx !== null ? " Frozen offer held." : ""));
+    log("Shop — Round " + state.round + ". " + roundGold() + " pay + " + bankedGold(unspent) + " bank" + (interestOn(unspent) ? " + " + interestOn(unspent) + " interest" : "") + " = " + state.gold + "g. " + (state.bankNote || "") + " Units persist (healed)." + (freezeIdx !== null ? " Frozen offer held." : ""));
     render();
   }
 
