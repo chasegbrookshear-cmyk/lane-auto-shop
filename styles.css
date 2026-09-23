@@ -86,3 +86,24 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .tip button {
   width: auto; margin: 0; padding: 8px 12px; flex-shrink: 0; background: var(--good); color: #061208;
 }
+
+#end-screen {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 1rem;
+  padding: 1rem 1rem 1.25rem;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  background: #12141a;
+  box-shadow: 0 -8px 24px rgba(0,0,0,.45);
+}
+#end-screen .rematch-cta,
+button.rematch-cta {
+  display: block;
+  width: 100%;
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding: 0.9rem 1rem;
+  margin-top: 0.75rem;
+}
