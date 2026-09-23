@@ -2,12 +2,12 @@
 
 Short MUST / MUST NOT for bots and humans. No full GDD.
 
-Current rules: 9g shop, units cost **1–4g**, roll 1g, sell = full printed-cost refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = 3 wins before 3 losses (best of 5). 28 units in the 1–4 curve. Keywords: Shield, Venom, Double, Overkill. Support is the partner slot. Fender Hurt splashes. Shop marks copies. AI fuses after 1-1-1. Combat ticks HP on the facing board.
+Current rules: gold starts at **6** and rises by 1 each round (cap **12**). Shop prices open over the run: rounds 1–2 are **1–2g**, rounds 3–4 add **3g**, round 5 adds **4g**. Equal odds among open prices. Roll 1g, sell = full printed-cost refund, max 2 units/lane, persist between rounds, win 2 of 3 lanes, run = **first to 6 wins, out at 5 losses** (a close game is 10 fights). 28 units in the 1–4 curve. Keywords: Shield, Venom, Double, Overkill. Support is the partner slot. Fender Hurt splashes. Shop marks copies. AI uses the same gold and the same price lock. Combat ticks HP on the facing board.
 
 ## 1) R1 AI shop — always fill 3
 
 **MUST**
-- Spend all 9g covering 3 lanes first (reserve 1g per remaining empty bay). Fill leftover. 0 rolls, 0 freeze. No R1 fuse. No R1 Service.
+- Spend round-1 gold (6) covering 3 lanes first. Shop and AI may only buy **1–2g** units. Fill leftover. 0 rolls, 0 freeze. No R1 fuse. No R1 Service.
 - Place **coverage** on R1. 1-1-1 if three 3-costs; 2-2-2 is legal if leftover 1-costs fill.
 - Use the same gold pool as the player. No R1 stat hacks.
 - If you later simulate a real shop: greedy-buy until 3 lanes have a unit; only then may you roll.
@@ -46,8 +46,9 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST NOT** — Splash the player’s own lanes. Don’t splash from every Hurt unit.
 
 **Run length**
-- **MUST** — First to **3** wins before **3** losses. Round still won on 2 of 3 lanes. Gold stays 9/10/11/12.
-- **MUST NOT** — Leftover gold, interest, or extra gold on triggers.
+- **MUST** — First to **6** wins. Out at **5** losses. A sweep is 6 fights. A close game lasts up to **10**. Round still won on 2 of 3 lanes.
+- **MUST** — Gold is 6, then +1 a round, stop at 12. Same number for the AI.
+- **MUST NOT** — End the run at 3–3. Don’t add interest until this length has been played.
 
 **Shop copy tell**
 - **MUST** — If a shop offer’s role is already on the player board, mark it **Copy**. Information only.
@@ -61,23 +62,23 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST** — The fighting front with **higher ATK** swings first. Ties go to you. Swap/Move now aim the seam.
 - **MUST NOT** — Always let the player punch first.
 
-**MUST NOT (until A–E ship)** food, shop tiers, items, a bench, extra gold on triggers.
+**MUST NOT (until the 10-fight length feels right)** food, items, a bench, extra gold on triggers, interest.
 
 ## 1–4 gold curve (playtest)
 
 **MUST**
-- Shop rolls 1–4g with **equal odds per price**, then a random unit at that price. Printed cost is paid and refunded. Start gold stays **9**.
-- 4-drops are legal on round 1. Cover still has to fit in 9g (a 4 leaves room for a 3 and a 2, or a 4, a 4, and a 1).
-- Higher costs later (5–10) need more starting gold or a longer gold curve. Do not add them on 9g.
+- Each **open** price is equally likely, then a random unit at that price. Printed cost is paid and refunded.
+- **Rounds 1–2:** 1–2g only (6–7 gold). **Rounds 3–4:** 1–3g (8–9 gold). **Round 5+:** 1–4g (10 gold, then up to 12). A 4-drop is a mid-run buy, not a turn-1 buy.
+- 5–10g units stay out until this 1–4 curve has been played on the long run. They would open even later, with more gold.
 - Keywords: **Shield** (first hit 0), **Venom** (damage faints), **Double** (two hits), **Overkill** (leftover to an adjacent enemy front).
-- R1 still cover 3. Cap stays 2. Run stays 3-and-3.
+- R1 still cover 3. Cap stays 2. Run is first to 6, out at 5 losses.
 - No Spec / Exodia pieces until 6g and 8g exist.
 
 **MUST NOT**
 - Flat 3g on every unit.
 - Incomplete 5-piece Exodia.
 - Ads on this web cut.
-- Interest. Runs are 3–5 fights and leftover gold is 1–2. Saving pays nothing yet. Revisit when 6g+ units exist and games are long enough to bank.
+- Interest. A 10-fight run is long enough to try it next, but not in this cut. Saving has to be tested after the price locks feel fair.
 
 
 ## 4) Support split — ship with the 9th role
