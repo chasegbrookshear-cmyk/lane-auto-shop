@@ -136,7 +136,10 @@
     const cap = maxGold == null ? Infinity : maxGold;
     const pool = UNITS.filter((u) => unitCost(u) <= cap);
     const list = pool.length ? pool : UNITS;
-    return cloneUnit(list[Math.floor(Math.random() * list.length)]);
+    const costs = [...new Set(list.map(unitCost))];
+    const cost = costs[Math.floor(Math.random() * costs.length)];
+    const tier = list.filter((u) => unitCost(u) === cost);
+    return cloneUnit(tier[Math.floor(Math.random() * tier.length)]);
   }
 
   function emptyLanes() {
@@ -147,15 +150,11 @@
     return lanes.reduce((n, stack) => n + stack.length, 0);
   }
 
-  function shopCap() {
-    return (state && state.round > 1) ? 4 : 3;
-  }
   function rollOffers(keepFrozen) {
     const next = [];
-    const cap = shopCap();
     for (let i = 0; i < 4; i++) {
       if (keepFrozen && freezeIdx === i && state.offers[i]) next.push(state.offers[i]);
-      else next.push(randomUnit(cap));
+      else next.push(randomUnit(4));
     }
     return next;
   }
@@ -578,7 +577,7 @@
     // R1 sacred: 9g → 3 buys → 1-1-1. No Service/Fuse/rolls/stat hacks.
     if (state.round === 1) {
       const enemy = emptyLanes();
-      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit(3));
+      for (let i = 0; i < 3; i++) enemy[i].push(randomUnit(4));
       notes.push("AI R1: 3 buys, 1-1-1 cover (same 9g).");
       state.aiNotes = notes;
       return enemy;
