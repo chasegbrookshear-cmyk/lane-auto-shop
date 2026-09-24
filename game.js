@@ -435,6 +435,7 @@
     state.gold = state.gold + refund - cost;
     state.lanes[lane].splice(slot, 1);
     state.lanes[lane].push(cloneUnit(offer));
+    tryAutoFuse(lane);
     state.offers[selectedOffer] = null;
     if (freezeIdx === selectedOffer) freezeIdx = null;
     selectedOffer = null;
@@ -474,6 +475,7 @@
       }
       state.lanes[from.lane].splice(from.slot, 1);
       state.lanes[toLane].push(a);
+      tryAutoFuse(toLane);
       selectedUnit = null;
       log("Moved " + a.name + " to Lane " + (toLane + 1) + ".");
       render();
@@ -514,6 +516,7 @@
     }
     state.gold -= cost;
     state.lanes[i].push(cloneUnit(offer));
+    tryAutoFuse(i);
     state.offers[selectedOffer] = null;
     if (freezeIdx === selectedOffer) freezeIdx = null;
     selectedOffer = null;
@@ -546,6 +549,20 @@
     state.lanes[lane] = [stack[1], stack[0]];
     log("Lane " + (lane + 1) + ": swapped front/back.");
     render();
+  }
+
+  function tryAutoFuse(lane) {
+    const stack = state.lanes[lane];
+    if (!stack || !canFuseLane(stack)) return;
+    const keep = stack[0];
+    const t = template(keep.id);
+    keep.veteran = true;
+    keep.atk += VET_ATK;
+    keep.maxHp += VET_HP;
+    keep.hp = keep.maxHp;
+    keep.name = "Veteran " + t.name;
+    state.lanes[lane] = [keep];
+    log("Combined into " + keep.name + " " + keep.atk + "/" + keep.hp + ".");
   }
 
   function fuseLane(lane) {
