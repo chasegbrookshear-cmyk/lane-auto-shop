@@ -1299,39 +1299,49 @@
         if (!a || !b) continue;
         any = true;
 
-        function swing(att, def, attSide, defSide) {
+        function strike(att, def, attSide, defSide) {
+          const pre = attSide === "you" ? "" : "enemy ";
+          const L = "Lane " + (i + 1) + ": ";
           let dmg = att.atk;
           if (def.shield) {
             def.shield = false;
             dmg = 0;
-            log(
-              "Lane " +
-                (i + 1) +
-                ": " +
-                att.name +
-                " hits " +
-                def.name +
-                " — Shield blocks (0 dmg)."
-            );
+            log(L + att.name + " hits " + def.name + " — Shield blocks (0 dmg).");
           } else {
             def.hp -= dmg;
-            log(
-              "Lane " +
-                (i + 1) +
-                ": " +
-                att.name +
-                " hits " +
-                def.name +
-                " for " +
-                dmg +
-                " → " +
-                Math.max(0, def.hp) +
-                " HP."
-            );
+            log(L + att.name + " hits " + def.name + " for " + dmg + " → " + Math.max(0, def.hp) + " HP.");
+            if (att.venom && dmg > 0 && def.hp > 0) {
+              def.hp = 0;
+              log(L + pre + att.name + " Venom → " + def.name + " faints.");
+            }
+            if (att.overkill && def.hp < 0) {
+              const left = -def.hp;
+              const defBoard = defSide === "you" ? boards.you : boards.enemy;
+              const hit = pickSplashTarget(i, defBoard);
+              if (hit) {
+                hit.unit.hp -= left;
+                log(L + pre + att.name + " Overkill → " + left + " to Lane " + (hit.lane + 1) + " " + hit.unit.name + " (" + Math.max(0, hit.unit.hp) + " HP).");
+                if (hit.unit.hp > 0) applyHurt(hit.unit, defSide, hit.lane, att, boards, faintUnit);
+                faintUnit(defSide, hit.unit, hit.lane, att);
+              } else {
+                log(L + pre + att.name + " Overkill — no adjacent enemy front.");
+              }
+            }
           }
           if (def.hp > 0 && dmg > 0) applyHurt(def, defSide, i, att, boards, faintUnit);
           faintUnit(defSide, def, i, att);
           faintUnit(attSide, att, i, def);
+        }
+
+        function swing(att, def, attSide, defSide) {
+          strike(att, def, attSide, defSide);
+          if (att.double && att.hp > 0) {
+            const next = front(defSide === "you" ? boards.you[i] : boards.enemy[i]);
+            if (next) {
+              log("Lane " + (i + 1) + ": " + (attSide === "you" ? "" : "enemy ") + att.name + " Double → second hit.");
+              strike(att, next, attSide, defSide);
+            }
+          }
         }
 
         if (a.atk >= b.atk) {
