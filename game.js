@@ -189,6 +189,7 @@
       gold: START_GOLD,
       goldParts: { pay: START_GOLD, carry: 0, bonus: 0, lost: 0 },
       aiUnspent: 0,
+      services: 0,
       round: 1,
       wins: 0,
       losses: 0,
@@ -412,10 +413,32 @@
     render();
   }
 
+  function replaceOffer(lane, slot) {
+    const offer = state.offers[selectedOffer];
+    const unit = state.lanes[lane] && state.lanes[lane][slot];
+    if (!offer || !unit) return;
+    const refund = unitCost(unit);
+    const cost = unitCost(offer);
+    if (state.gold + refund < cost) {
+      log("Not enough gold, even after the refund.");
+      render();
+      return;
+    }
+    state.gold = state.gold + refund - cost;
+    state.lanes[lane].splice(slot, 1);
+    state.lanes[lane].push(cloneUnit(offer));
+    state.offers[selectedOffer] = null;
+    if (freezeIdx === selectedOffer) freezeIdx = null;
+    selectedOffer = null;
+    log("Replaced " + unit.name + " with " + offer.name + " (+" + refund + "g, -" + cost + "g).");
+    render();
+  }
+
   function onUnitClick(lane, slot) {
     if (state.phase !== "shop") return;
     if (selectedOffer !== null) {
-      onLaneClick(lane);
+      if (state.lanes[lane].length >= CAP) replaceOffer(lane, slot);
+      else onLaneClick(lane);
       return;
     }
     if (selectedUnit && (selectedUnit.lane !== lane || selectedUnit.slot !== slot)) {
@@ -545,12 +568,18 @@
     if (state.phase !== "shop") return;
     const unit = state.lanes[lane][slot];
     if (!unit) return;
+    if ((state.services || 0) >= 1) {
+      log("Service is once per shop.");
+      render();
+      return;
+    }
     if (state.gold < SERVICE) {
       log("Not enough gold for Service.");
       render();
       return;
     }
     state.gold -= SERVICE;
+    state.services = (state.services || 0) + 1;
     unit.atk += 1;
     unit.maxHp += 1;
     unit.hp += 1;
@@ -1498,6 +1527,7 @@
     const bonus = interestOn(unspent);
     const wasted = Math.max(0, unspent - kept);
     state.gold = roundGold() + kept + bonus;
+    state.services = 0;
     state.bankNote = wasted ? (wasted + "g over the bank of 6 was lost.") : "";
     state.goldParts = { pay: roundGold(), carry: kept, bonus: bonus, lost: wasted };
     state.lanes = state.lanes.map((stack) => stack.map((u) => healUnit(u)));

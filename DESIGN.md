@@ -49,6 +49,8 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST** — First to **6** wins. Out at **5** losses. A sweep is 6 fights. A close game lasts up to **10**. Round still won on 2 of 3 lanes.
 - **MUST** — Gold is 6, then +1 a round, stop at 12. Same paycheck for the AI.
 - **MUST** — Unspent gold carries. You can keep **6**. Keep 3–5 and next round pays **+1**. Keep 6 and it pays **+2**. Never more than +2. Gold over 6 is lost at end of turn. The AI's leftover uses the same bank.
+- **MUST** — Service is **once per shop** (3g, +1/+1). It is not a gold dump.
+- **MUST** — On a full lane, selecting a shop offer and tapping a unit **replaces** that unit. Refund the old cost, then pay the new one. The AI does this too when gold is over the bank of 6, and only Services once.
 - **MUST NOT** — End the run at 3–3. Don’t wipe leftover gold. Don’t pay interest on gold you already lost to the cap.
 
 **Shop copy tell**
@@ -56,7 +58,7 @@ Cap=2 is a HP bag if Start buffs self. Partner + swap + Veteran + Service + Wall
 - **MUST NOT** — Bias rolls toward copies. Don’t pity-timer a matching unit.
 
 **D. Move (0g, shop)**
-- **MUST** — Tap a placed unit, then an open bay to relocate, or another unit (or a full bay) to **swap**. 0g. Tapping a unit while a shop offer is selected **buys behind** that unit if the bay has room.
+- **MUST** — Tap a placed unit, then an open bay to relocate, or another unit (or a full bay) to **swap**. 0g. Tapping a unit while a shop offer is selected **buys behind** if the bay has room, or **replaces** that unit if the bay is full.
 - **MUST NOT** — A bench. The other bay is the bench. Don't charge gold.
 
 **E. First strike**
