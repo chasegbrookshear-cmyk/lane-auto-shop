@@ -213,7 +213,9 @@
     render();
   }
 
+  let combatTap = null;
   function log(msg, cls) {
+    if (combatTap) combatTap(msg);
     state.log.push({ msg, cls });
     if (state.log.length > 120) state.log.shift();
   }
@@ -1275,6 +1277,13 @@
       enemy: enemySnap.map((s) => s.map((u) => ({ ...u }))),
     };
 
+    // Thu #3: remember the last trigger or keyword each side fired per lane, for the "why" line
+    const swings = [{ you: null, enemy: null }, { you: null, enemy: null }, { you: null, enemy: null }];
+    const TRIG = /^Lane (\d): (enemy )?(\S+) (Start|Hurt|Faint|Venom|Double|Overkill) /;
+    combatTap = (msg) => {
+      const m = TRIG.exec(msg);
+      if (m) swings[+m[1] - 1][m[2] ? "enemy" : "you"] = m[3] + " " + m[4];
+    };
     for (let i = 0; i < 3; i++) {
       applyStartBuff(boards.you[i], i, "");
       applyStartBuff(boards.enemy[i], i, "enemy ");
@@ -1306,6 +1315,7 @@
           if (def.shield) {
             def.shield = false;
             dmg = 0;
+            swings[i][defSide] = def.name + " Shield";
             log(L + att.name + " hits " + def.name + " — Shield blocks (0 dmg).");
           } else {
             def.hp -= dmg;
@@ -1355,6 +1365,17 @@
       if (!any) break;
     }
 
+    combatTap = null;
+    function why(i, side) {
+      const lane = side === "you" ? boards.you[i] : boards.enemy[i];
+      const alive = lane.filter((u) => u.hp > 0);
+      const who = side === "you" ? "Your " : "AI ";
+      const surv = alive.length
+        ? who + alive.map((u) => u.name + " (" + u.hp + " HP)").join(" + ") + " survived"
+        : "Nobody survived";
+      const t = swings[i][side];
+      return surv + ". " + (t ? "Last trigger: " + t + "." : "No trigger fired; raw ATK/HP decided it.");
+    }
     let youLanes = 0;
     let enemyLanes = 0;
     for (let i = 0; i < 3; i++) {
@@ -1366,10 +1387,10 @@
         log("Lane " + (i + 1) + ": empty draw.");
       } else if (aAlive && !bAlive) {
         youLanes += 1;
-        log("Lane " + (i + 1) + ": YOU win.", "win");
+        log("Lane " + (i + 1) + ": YOU win. " + why(i, "you"), "win");
       } else if (bAlive && !aAlive) {
         enemyLanes += 1;
-        log("Lane " + (i + 1) + ": AI wins.", "loss");
+        log("Lane " + (i + 1) + ": AI wins. " + why(i, "enemy"), "loss");
       } else if (!aAlive && !bAlive) {
         log("Lane " + (i + 1) + ": mutual wipe — draw.");
       } else {
@@ -1377,10 +1398,10 @@
         const bh = boards.enemy[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
         if (ah > bh) {
           youLanes += 1;
-          log("Lane " + (i + 1) + ": YOU win on HP (" + ah + ">" + bh + ").", "win");
+          log("Lane " + (i + 1) + ": YOU win on HP (" + ah + ">" + bh + "). " + why(i, "you"), "win");
         } else if (bh > ah) {
           enemyLanes += 1;
-          log("Lane " + (i + 1) + ": AI wins on HP (" + bh + ">" + ah + ").", "loss");
+          log("Lane " + (i + 1) + ": AI wins on HP (" + bh + ">" + ah + "). " + why(i, "enemy"), "loss");
         } else {
           log("Lane " + (i + 1) + ": draw.");
         }
