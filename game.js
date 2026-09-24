@@ -220,6 +220,14 @@
 
 
   // Cut Thu #1: Gold HUD breakdown + over-bank warning
+
+  // Theme: keyword pill chips; drop duplicate "Ng · " prefix (cost shows in the name line)
+  const KW = /\b(Shield|Venom|Double|Overkill|Start|Hurt|Faint)\b/g;
+  function chipText(text) {
+    const t = String(text || "").replace(/^\d+g · /, "");
+    return t.replace(KW, (m) => '<span class="chip chip-' + m.toLowerCase() + '">' + m + "</span>");
+  }
+
   function renderGoldMath() {
     if (!el.goldMath) return;
     const g = state.goldParts || { pay: state.gold, carry: 0, bonus: 0, lost: 0 };
@@ -242,7 +250,7 @@
   }
 
   function render() {
-    el.gold.textContent = "Gold: " + state.gold;
+    el.gold.textContent = state.gold + "g";
     renderGoldMath();
     el.round.textContent = "Round " + state.round;
     el.record.textContent = "W" + state.wins + " – L" + state.losses;
@@ -270,7 +278,7 @@
           "/" +
           u.hp +
           " · " +
-          u.text +
+          chipText(u.text) +
           (freezeIdx === i ? " · FROZEN" : "") +
           "</span>";
         btn.addEventListener("click", () => onOfferClick(i));
@@ -308,9 +316,9 @@
       state.phase === "shop" &&
       ((selectedOffer !== null && stack.length < CAP) ||
         (selectedUnit && selectedUnit.lane !== i));
-    div.className = "lane" + (canDrop ? " drop" : "");
+    div.className = "lane" + (mine ? " mine" : " theirs") + (canDrop ? " drop" : "");
     div.innerHTML =
-      '<div class="tag">Lane ' +
+      '<div class="tag">' + (mine ? "Bay " : "Lane ") +
       (i + 1) +
       " · " +
       stack.length +
@@ -348,7 +356,7 @@
           "/" +
           unit.hp +
           " · " +
-          unit.text +
+          chipText(unit.text) +
           "</span>" +
           (mine && state.phase === "shop"
             ? '<span class="unit-acts">' +
