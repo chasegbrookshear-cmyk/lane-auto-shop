@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Lane Auto Shop</title>
-  <link rel="stylesheet" href="styles.css?v=thu1-goldhud" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔧</text></svg>" />
+  <link rel="stylesheet" href="styles.css?v=theme-nightshift" />
 </head>
 <body>
   <div id="app">
@@ -14,7 +15,7 @@
     </header>
 
     <section class="hud">
-      <span id="gold">Gold: 9</span>
+      <span class="gold-chip" title="Gold">🔧 <span id="gold">6g</span></span>
       <span id="round">Round 1</span>
       <span id="record">W0 – L0</span>
       <span id="gold-math" class="gold-math"></span>
@@ -26,7 +27,7 @@
     </div>
 
     <section id="shop-screen" class="screen">
-      <h2>Shop</h2>
+      <h2>Parts board</h2>
       <div id="offers" class="offers"></div>
       <div class="shop-actions">
         <button type="button" id="btn-roll">Roll (1g)</button>
@@ -37,9 +38,9 @@
     </section>
 
     <section class="board-wrap">
-      <h2>Your lanes</h2>
+      <h2>Your garage</h2>
       <div id="board" class="board"></div>
-      <h2>Enemy</h2>
+      <h2>Their garage</h2>
       <div id="enemy" class="board enemy"></div>
     </section>
 
@@ -60,6 +61,6 @@
       <button type="button" id="btn-rematch" class="primary">New run / Rematch</button>
     </section>
   </div>
-  <script src="game.js?v=thu1-goldhud"></script>
+  <script src="game.js?v=theme-nightshift"></script>
 </body>
 </html>
