@@ -107,3 +107,7 @@ button.rematch-cta {
   padding: 0.9rem 1rem;
   margin-top: 0.75rem;
 }
+
+.gold-math { flex-basis: 100%; font-weight: 500; font-size: 0.85rem; color: var(--muted); }
+.bank-warn { margin: 0 0 8px; font-size: 0.88rem; color: var(--muted); }
+.bank-warn.warn { color: #ffcc66; font-weight: 700; }
