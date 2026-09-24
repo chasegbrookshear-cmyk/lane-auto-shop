@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Lane Auto Shop</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=thu1-goldhud" />
 </head>
 <body>
   <div id="app">
@@ -17,6 +17,7 @@
       <span id="gold">Gold: 9</span>
       <span id="round">Round 1</span>
       <span id="record">W0 – L0</span>
+      <span id="gold-math" class="gold-math"></span>
     </section>
 
     <div id="tip" class="tip">
@@ -31,6 +32,7 @@
         <button type="button" id="btn-roll">Roll (1g)</button>
         <button type="button" id="btn-end" class="primary">End Turn → Fight</button>
       </div>
+      <p id="bank-warn" class="bank-warn hidden"></p>
       <p class="hint">Buy at the printed cost, tap a lane. Tap a unit, then a bay to move (or another unit to swap). Higher ATK front strikes first. Copies fuse. Empty lanes lose.</p>
     </section>
 
@@ -58,6 +60,6 @@
       <button type="button" id="btn-rematch" class="primary">New run / Rematch</button>
     </section>
   </div>
-  <script src="game.js?v=cut3-rematch"></script>
+  <script src="game.js?v=thu1-goldhud"></script>
 </body>
 </html>
