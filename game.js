@@ -1296,7 +1296,7 @@
 
     // Thu #3: remember the last trigger or keyword each side fired per lane, for the "why" line
     const swings = [{ you: null, enemy: null }, { you: null, enemy: null }, { you: null, enemy: null }];
-    const TRIG = /^Lane (\d): (enemy )?(\S+) (Start|Hurt|Faint|Venom|Double|Overkill) /;
+    const TRIG = /^Lane (\d): (enemy )?(.+?) (Start|Hurt|Faint|Venom|Double|Overkill) /;
     combatTap = (msg) => {
       const m = TRIG.exec(msg);
       if (m) swings[+m[1] - 1][m[2] ? "enemy" : "you"] = m[3] + " " + m[4];
@@ -1393,6 +1393,17 @@
       const t = swings[i][side];
       return surv + ". " + (t ? "Last trigger: " + t + "." : "No trigger fired; raw ATK/HP decided it.");
     }
+    function whyDraw(i) {
+      const side = (k) => {
+        const lane = k === "you" ? boards.you[i] : boards.enemy[i];
+        const alive = lane.filter((u) => u.hp > 0);
+        const who = k === "you" ? "Your " : "AI ";
+        return alive.length ? who + alive.map((u) => u.name + " (" + u.hp + " HP)").join(" + ") : who + "side wiped";
+      };
+      const t = (k) => swings[i][k] || "none";
+      const head = boards.you[i].some((u) => u.hp > 0) ? side("you") + " vs " + side("enemy") : "Both sides wiped";
+      return head + ". Last triggers: yours " + t("you") + ", AI " + t("enemy") + ".";
+    }
     let youLanes = 0;
     let enemyLanes = 0;
     for (let i = 0; i < 3; i++) {
@@ -1409,7 +1420,7 @@
         enemyLanes += 1;
         log("Lane " + (i + 1) + ": AI wins. " + why(i, "enemy"), "loss");
       } else if (!aAlive && !bAlive) {
-        log("Lane " + (i + 1) + ": mutual wipe — draw.");
+        log("Lane " + (i + 1) + ": mutual wipe — draw. " + whyDraw(i));
       } else {
         const ah = boards.you[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
         const bh = boards.enemy[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
@@ -1420,7 +1431,7 @@
           enemyLanes += 1;
           log("Lane " + (i + 1) + ": AI wins on HP (" + bh + ">" + ah + "). " + why(i, "enemy"), "loss");
         } else {
-          log("Lane " + (i + 1) + ": draw.");
+          log("Lane " + (i + 1) + ": draw on equal HP. " + whyDraw(i));
         }
       }
     }
