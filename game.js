@@ -40,6 +40,8 @@
 
   const el = {
     gold: document.getElementById("gold"),
+    goldMath: document.getElementById("gold-math"),
+    bankWarn: document.getElementById("bank-warn"),
     round: document.getElementById("round"),
     record: document.getElementById("record"),
     offers: document.getElementById("offers"),
@@ -185,6 +187,7 @@
   function startRun() {
     state = {
       gold: START_GOLD,
+      goldParts: { pay: START_GOLD, carry: 0, bonus: 0, lost: 0 },
       aiUnspent: 0,
       round: 1,
       wins: 0,
@@ -214,8 +217,32 @@
     if (state.log.length > 120) state.log.shift();
   }
 
+
+  // Cut Thu #1: Gold HUD breakdown + over-bank warning
+  function renderGoldMath() {
+    if (!el.goldMath) return;
+    const g = state.goldParts || { pay: state.gold, carry: 0, bonus: 0, lost: 0 };
+    let txt = "This shop: " + g.pay + " pay + " + g.carry + " carry + " + g.bonus + " bank bonus";
+    if (g.lost) txt += " · " + g.lost + "g lost over the bank";
+    el.goldMath.textContent = txt;
+    if (!el.bankWarn) return;
+    const shop = state.phase === "shop";
+    const over = Math.max(0, state.gold - 6);
+    if (shop && over > 0) {
+      el.bankWarn.textContent = "End Turn now: " + over + "g will be lost (bank holds 6). Carry 6 +2 bonus.";
+      el.bankWarn.className = "bank-warn warn";
+    } else if (shop && state.gold > 0) {
+      el.bankWarn.textContent = "End Turn now: carry " + state.gold + "g" + (interestOn(state.gold) ? " +" + interestOn(state.gold) + " bonus" : "") + " to next shop.";
+      el.bankWarn.className = "bank-warn";
+    } else {
+      el.bankWarn.textContent = "";
+      el.bankWarn.className = "bank-warn hidden";
+    }
+  }
+
   function render() {
     el.gold.textContent = "Gold: " + state.gold;
+    renderGoldMath();
     el.round.textContent = "Round " + state.round;
     el.record.textContent = "W" + state.wins + " – L" + state.losses;
 
@@ -1472,6 +1499,7 @@
     const wasted = Math.max(0, unspent - kept);
     state.gold = roundGold() + kept + bonus;
     state.bankNote = wasted ? (wasted + "g over the bank of 6 was lost.") : "";
+    state.goldParts = { pay: roundGold(), carry: kept, bonus: bonus, lost: wasted };
     state.lanes = state.lanes.map((stack) => stack.map((u) => healUnit(u)));
     state.enemyPersist = (state.enemyRoster || state.enemy || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
