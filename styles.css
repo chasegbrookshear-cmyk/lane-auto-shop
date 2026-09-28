@@ -196,3 +196,11 @@ body { background: var(--bg); color: var(--text); }
 .hint, .rules { color: var(--muted); }
 h1, h2 { color: var(--text); letter-spacing: 0.02em; }
 .comeback-line { color: var(--accent); }
+
+#btn-roll {
+  background: linear-gradient(180deg, #f0c56a, var(--accent) 55%, #8a6808);
+  color: #1a1204;
+  border: 1px solid #f0c56a;
+  font-weight: 700;
+}
+#btn-roll:disabled { opacity: 0.5; }
