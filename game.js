@@ -371,7 +371,7 @@
         ? ' <button type="button" class="swap" data-swap="' + i + '">Swap</button>'
         : "") +
       (mine && state.phase === "shop" && canFuseLane(stack)
-        ? ' <button type="button" class="swap fuse" data-fuse="' + i + '">Fuse</button>'
+        ? ' <button type="button" class="swap fuse" data-fuse="' + i + '">Promote</button>'
         : "") +
       (canReplace ? ' <span class="preview-hint">tap a unit to replace · buy → Back</span>' : "") +
       "</div>";
@@ -1201,7 +1201,7 @@
               ": " +
               prefix +
               u.name +
-              " Start — bay full, no Lug."
+              " Start — wall full, no Squire."
           );
           return;
         }
@@ -1218,7 +1218,7 @@
             ": " +
             prefix +
             u.name +
-            " Start → spawn Lug 1/1 behind."
+            " Start → spawn Squire 1/1 behind."
         );
         return;
       }
