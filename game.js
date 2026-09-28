@@ -41,6 +41,7 @@
   const el = {
     gold: document.getElementById("gold"),
     goldMath: document.getElementById("gold-math"),
+    comeback: document.getElementById("comeback"),
     bankWarn: document.getElementById("bank-warn"),
     round: document.getElementById("round"),
     record: document.getElementById("record"),
@@ -171,6 +172,15 @@
     if (kept >= 3) return 1;
     return 0;
   }
+
+  function comebackGold(streak) {
+    const n = streak | 0;
+    if (n <= 0) return 0;
+    if (n === 1) return 1;
+    if (n === 2) return 3;
+    return 5; // 3+ capped
+  }
+
   function nextShopGold(round, unspent) {
     const pay = Math.min(12, START_GOLD + Math.max(0, round - 1));
     return pay + bankedGold(unspent) + interestOn(unspent);
@@ -188,6 +198,9 @@
     state = {
       gold: START_GOLD,
       goldParts: { pay: START_GOLD, carry: 0, bonus: 0, lost: 0 },
+      lossStreak: 0,
+      aiLossStreak: 0,
+      comeback: 0,
       aiUnspent: 0,
       services: 0,
       round: 1,
@@ -236,6 +249,18 @@
     let txt = "This shop: " + g.pay + " pay + " + g.carry + " carry + " + g.bonus + " bank bonus";
     if (g.lost) txt += " · " + g.lost + "g lost over the bank";
     el.goldMath.textContent = txt;
+    if (el.comeback) {
+      const cb = state.comeback | 0;
+      const st = state.lossStreak | 0;
+      if (cb > 0 && state.phase === "shop") {
+        el.comeback.textContent =
+          "Comeback +" + cb + "g (" + st + " loss" + (st === 1 ? "" : "es") + " in a row).";
+        el.comeback.className = "comeback-line";
+      } else {
+        el.comeback.textContent = "";
+        el.comeback.className = "comeback-line hidden";
+      }
+    }
     if (!el.bankWarn) return;
     const shop = state.phase === "shop";
     const over = Math.max(0, state.gold - 6);
@@ -724,7 +749,9 @@
     const enemy = (state.enemyPersist || emptyLanes()).map((stack) =>
       stack.map((u) => healUnit(u))
     );
-    let gold = nextShopGold(state.round, state.aiUnspent || 0);
+    const aiCb = comebackGold(state.aiLossStreak | 0);
+    let gold = nextShopGold(state.round, state.aiUnspent || 0) + aiCb;
+    if (aiCb) notes.push("AI comeback +" + aiCb + "g (" + state.aiLossStreak + " losses in a row).");
     let serviced = false;
     let rolled = false;
     let guard = 12;
@@ -1571,12 +1598,16 @@
     const roundWin = youLanes >= 2;
     if (roundWin) {
       state.wins += 1;
+      state.lossStreak = 0;
+      state.aiLossStreak = (state.aiLossStreak | 0) + 1;
       log(
         "Round " + state.round + ": you take it " + youLanes + "–" + enemyLanes + ".",
         "win"
       );
     } else {
       state.losses += 1;
+      state.lossStreak = (state.lossStreak | 0) + 1;
+      state.aiLossStreak = 0;
       log(
         "Round " +
           state.round +
@@ -1637,7 +1668,9 @@
     const kept = bankedGold(unspent);
     const bonus = interestOn(unspent);
     const wasted = Math.max(0, unspent - kept);
-    state.gold = roundGold() + kept + bonus;
+    const cb = comebackGold(state.lossStreak | 0);
+    state.comeback = cb;
+    state.gold = roundGold() + kept + bonus + cb;
     state.services = 0;
     state.bankNote = wasted ? (wasted + "g over the bank of 6 was lost.") : "";
     state.goldParts = { pay: roundGold(), carry: kept, bonus: bonus, lost: wasted };
@@ -1651,7 +1684,7 @@
     state.enemy = emptyLanes();
     state.phase = "shop";
     el.shop.classList.remove("hidden");
-    log("Shop — Round " + state.round + ". " + roundGold() + " pay + " + bankedGold(unspent) + " bank" + (interestOn(unspent) ? " + " + interestOn(unspent) + " interest" : "") + " = " + state.gold + "g. " + (state.bankNote || "") + " Units persist (healed)." + (freezeIdx !== null ? " Frozen offer held." : ""));
+    log("Shop — Round " + state.round + ". " + roundGold() + " pay + " + bankedGold(unspent) + " bank" + (interestOn(unspent) ? " + " + interestOn(unspent) + " interest" : "") + (cb ? " + " + cb + "g comeback" : "") + " = " + state.gold + "g. " + (state.bankNote || "") + " Units persist (healed)." + (freezeIdx !== null ? " Frozen offer held." : ""));
     render();
   }
 
