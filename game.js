@@ -1,33 +1,33 @@
 (() => {
   const UNITS = [
-    { id: "lug", name: "Lug", cost: 1, atk: 1, hp: 1, trigger: "start", text: "1g · Start: +1 HP partner (self if solo)" },
-    { id: "cone", name: "Cone", cost: 1, atk: 0, hp: 3, text: "1g · Blocks. No ability." },
-    { id: "clip", name: "Clip", cost: 1, atk: 1, hp: 2, trigger: "faint", faintAim: "killer", text: "1g · Faint: 1 to whoever killed you" },
-    { id: "rag", name: "Rag", cost: 1, atk: 1, hp: 1, trigger: "hurt", text: "1g · Hurt: +1 ATK this fight" },
-    { id: "spark", name: "Spark", cost: 1, atk: 1, hp: 1, trigger: "faint", faintAim: "adjacent", text: "1g · Faint: adjacent bay front +1 ATK" },
-    { id: "drip", name: "Drip", cost: 1, atk: 1, hp: 2, trigger: "hurt", text: "1g · Hurt: +1 HP partner (self if solo)" },
-    { id: "wedge", name: "Wedge", cost: 1, atk: 1, hp: 2, trigger: "start", text: "1g · Start: jumps to front" },
-    { id: "cowl", name: "Cowl", cost: 2, atk: 1, hp: 4, shield: true, text: "2g · Shield (first hit does 0)" },
-    { id: "bit", name: "Bit", cost: 2, atk: 2, hp: 2, trigger: "hurt", text: "2g · Hurt: 1 to attacker" },
-    { id: "hose", name: "Hose", cost: 2, atk: 1, hp: 3, trigger: "start", text: "2g · Start: partner gains Shield (self if solo)" },
-    { id: "clamp", name: "Clamp", cost: 2, atk: 2, hp: 3, trigger: "start", text: "2g · Start: jumps to front, partner +1 HP" },
-    { id: "snap", name: "Snap", cost: 2, atk: 2, hp: 1, trigger: "faint", faintAim: "enemy", text: "2g · Faint: 2 to the enemy front in this bay" },
-    { id: "blink", name: "Blink", cost: 2, atk: 2, hp: 2, trigger: "start", text: "2g · Start: +1/+1 if you are solo in this bay" },
-    { id: "ragman", name: "Ragman", cost: 2, atk: 1, hp: 3, trigger: "hurt", text: "2g · Hurt: this bay partner +1 HP (self if solo)" },
-    { id: "guard", name: "Bumper", cost: 3, atk: 2, hp: 5, trigger: "start", text: "3g · Start: +1 ATK partner (self if solo)" },
-    { id: "skirmisher", name: "Rivet", cost: 3, atk: 2, hp: 4, trigger: "hurt", text: "3g · Hurt: 1 to attacker, +1 HP partner (self if solo)" },
-    { id: "anchor", name: "Jack", cost: 3, atk: 1, hp: 6, trigger: "start", text: "3g · Start: +2 HP partner (self if solo)" },
-    { id: "scout", name: "Spotter", cost: 3, atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "3g · Faint: +1 HP adjacent lane" },
-    { id: "bruiser", name: "Sledge", cost: 3, atk: 4, hp: 2, trigger: "hurt", text: "3g · Hurt: 1 to attacker" },
-    { id: "medic", name: "Patch", cost: 3, atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "3g · Faint: +2 HP partner in this lane" },
-    { id: "blade", name: "Torque", cost: 3, atk: 3, hp: 2, trigger: "start", text: "3g · Start: +2 ATK partner (+1 ATK if solo)" },
-    { id: "wall", name: "Fender", cost: 3, atk: 2, hp: 6, trigger: "hurt", text: "3g · Hurt: 1 to attacker and 1 to an adjacent enemy front" },
-    { id: "crew", name: "Pit", cost: 3, atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "3g · Faint: +1 ATK partner in this lane" },
-    { id: "boom", name: "Boom", cost: 4, atk: 4, hp: 4, double: true, text: "4g · Double (hits twice)" },
-    { id: "apron", name: "Apron", cost: 4, atk: 2, hp: 5, trigger: "start", text: "4g · Start: Shield on both units in this bay" },
-    { id: "rail", name: "Rail", cost: 4, atk: 3, hp: 6, overkill: true, text: "4g · Overkill leftover to an adjacent enemy front" },
-    { id: "torch", name: "Torch", cost: 4, atk: 3, hp: 3, venom: true, text: "4g · Venom — damage faints them" },
-    { id: "dolly", name: "Dolly", cost: 4, atk: 2, hp: 4, trigger: "start", text: "4g · Start: if room, spawn a 1/1 Lug behind you" },
+    { id: "lug", name: "Squire", cost: 1, atk: 1, hp: 1, trigger: "start", text: "1g · Start: +1 HP partner (self if solo)" },
+    { id: "cone", name: "Pavise", cost: 1, atk: 0, hp: 3, text: "1g · Blocks. No ability." },
+    { id: "clip", name: "Snare", cost: 1, atk: 1, hp: 2, trigger: "faint", faintAim: "killer", text: "1g · Faint: 1 to whoever killed you" },
+    { id: "rag", name: "Berserk", cost: 1, atk: 1, hp: 1, trigger: "hurt", text: "1g · Hurt: +1 ATK this fight" },
+    { id: "spark", name: "Ember", cost: 1, atk: 1, hp: 1, trigger: "faint", faintAim: "adjacent", text: "1g · Faint: adjacent wall front +1 ATK" },
+    { id: "drip", name: "Leech", cost: 1, atk: 1, hp: 2, trigger: "hurt", text: "1g · Hurt: +1 HP partner (self if solo)" },
+    { id: "wedge", name: "Vanguard", cost: 1, atk: 1, hp: 2, trigger: "start", text: "1g · Start: jumps to front" },
+    { id: "cowl", name: "Aegis", cost: 2, atk: 1, hp: 4, shield: true, text: "2g · Ward (first hit does 0)" },
+    { id: "bit", name: "Quill", cost: 2, atk: 2, hp: 2, trigger: "hurt", text: "2g · Hurt: 1 to attacker" },
+    { id: "hose", name: "Warder", cost: 2, atk: 1, hp: 3, trigger: "start", text: "2g · Start: partner gains Ward (self if solo)" },
+    { id: "clamp", name: "Herald", cost: 2, atk: 2, hp: 3, trigger: "start", text: "2g · Start: jumps to front, partner +1 HP" },
+    { id: "snap", name: "Hex", cost: 2, atk: 2, hp: 1, trigger: "faint", faintAim: "enemy", text: "2g · Faint: 2 to the enemy front in this wall" },
+    { id: "blink", name: "Shade", cost: 2, atk: 2, hp: 2, trigger: "start", text: "2g · Start: +1/+1 if you are solo in this wall" },
+    { id: "ragman", name: "Mender", cost: 2, atk: 1, hp: 3, trigger: "hurt", text: "2g · Hurt: this wall partner +1 HP (self if solo)" },
+    { id: "guard", name: "Shieldwall", cost: 3, atk: 2, hp: 5, trigger: "start", text: "3g · Start: +1 ATK partner (self if solo)" },
+    { id: "skirmisher", name: "Raider", cost: 3, atk: 2, hp: 4, trigger: "hurt", text: "3g · Hurt: 1 to attacker, +1 HP partner (self if solo)" },
+    { id: "anchor", name: "Bastion", cost: 3, atk: 1, hp: 6, trigger: "start", text: "3g · Start: +2 HP partner (self if solo)" },
+    { id: "scout", name: "Scout", cost: 3, atk: 2, hp: 3, trigger: "faint", faintAim: "adjacent", text: "3g · Faint: +1 HP adjacent wall" },
+    { id: "bruiser", name: "Mauler", cost: 3, atk: 4, hp: 2, trigger: "hurt", text: "3g · Hurt: 1 to attacker" },
+    { id: "medic", name: "Chirurgeon", cost: 3, atk: 1, hp: 4, trigger: "faint", faintAim: "partner", text: "3g · Faint: +2 HP partner in this wall" },
+    { id: "blade", name: "Duelist", cost: 3, atk: 3, hp: 2, trigger: "start", text: "3g · Start: +2 ATK partner (+1 ATK if solo)" },
+    { id: "wall", name: "Rampart", cost: 3, atk: 2, hp: 6, trigger: "hurt", text: "3g · Hurt: 1 to attacker and 1 to an adjacent enemy front" },
+    { id: "crew", name: "Banneret", cost: 3, atk: 2, hp: 3, trigger: "faint", faintAim: "partner", text: "3g · Faint: +1 ATK partner in this wall" },
+    { id: "boom", name: "Catapult", cost: 4, atk: 4, hp: 4, double: true, text: "4g · Double (hits twice)" },
+    { id: "apron", name: "Sanctum", cost: 4, atk: 2, hp: 5, trigger: "start", text: "4g · Start: Ward on both units in this wall" },
+    { id: "rail", name: "Ballista", cost: 4, atk: 3, hp: 6, overkill: true, text: "4g · Overkill leftover to an adjacent enemy front" },
+    { id: "torch", name: "Wyrmfire", cost: 4, atk: 3, hp: 3, venom: true, text: "4g · Poison — damage faints them" },
+    { id: "dolly", name: "Nest", cost: 4, atk: 2, hp: 4, trigger: "start", text: "4g · Start: if room, spawn a 1/1 Squire behind you" },
   ];
 
   const BUY = 3;
@@ -237,7 +237,7 @@
   // Cut Thu #1: Gold HUD breakdown + over-bank warning
 
   // Theme: keyword pill chips; drop duplicate "Ng · " prefix (cost shows in the name line)
-  const KW = /\b(Shield|Venom|Double|Overkill|Start|Hurt|Faint)\b/g;
+  const KW = /\b(Ward|Poison|Shield|Venom|Double|Overkill|Start|Hurt|Faint)\b/g;
   function chipText(text) {
     const t = String(text || "").replace(/^\d+g · /, "");
     return t.replace(KW, (m) => '<span class="chip chip-' + m.toLowerCase() + '">' + m + "</span>");
@@ -332,7 +332,7 @@
 
     el.log.innerHTML = state.log
       .map((l) => {
-        const kw = /\b(Shield|Venom|Double|Overkill|Start|Hurt|Faint)\b/.test(l.msg);
+        const kw = /\b(Ward|Poison|Shield|Venom|Double|Overkill|Start|Hurt|Faint)\b/.test(l.msg);
         const cls = ((l.cls || "") + (kw ? " kw" : "")).trim();
         return '<div class="' + cls + '">' + l.msg + "</div>";
       })
@@ -361,7 +361,7 @@
       (canDrop ? " drop" : "") +
       (canReplace ? " replace-mode" : "");
     div.innerHTML =
-      '<div class="tag">' + (mine ? "Bay " : "Lane ") +
+      '<div class="tag">' + (mine ? "Wall " : "Wall ") +
       (i + 1) +
       " · " +
       stack.length +
@@ -416,7 +416,7 @@
               "g</button>" +
               '<button type="button" class="act" data-svc' +
               (state.gold < SERVICE ? " disabled" : "") +
-              ">Service " +
+              ">Armorer " +
               SERVICE +
               "g</button></span>"
             : "");
@@ -623,7 +623,7 @@
       log(
         stack.length === 2 && (stack[0].veteran || stack[1].veteran)
           ? "Already a Veteran — one step only."
-          : "Fuse needs two matching unfused copies in this lane.",
+          : "Promote needs two matching unfused copies in this wall.",
       );
       render();
       return;
@@ -636,7 +636,7 @@
     keep.hp = keep.maxHp;
     keep.name = "Veteran " + t.name;
     state.lanes[lane] = [keep];
-    log("Fused two " + t.name + "s into " + keep.name + " (" + keep.atk + "/" + keep.maxHp + "). Slot freed.");
+    log("Promoted two " + t.name + "s into " + keep.name + " (" + keep.atk + "/" + keep.maxHp + "). Slot freed.");
     render();
   }
 
@@ -645,12 +645,12 @@
     const unit = state.lanes[lane][slot];
     if (!unit) return;
     if ((state.services || 0) >= 1) {
-      log("Service is once per shop.");
+      log("Armorer is once per shop.");
       render();
       return;
     }
     if (state.gold < SERVICE) {
-      log("Not enough gold for Service.");
+      log("Not enough gold for Armorer.");
       render();
       return;
     }
@@ -659,7 +659,7 @@
     unit.atk += 1;
     unit.maxHp += 1;
     unit.hp += 1;
-    log("Serviced " + unit.name + " → " + unit.atk + "/" + unit.hp + ".");
+    log("Armorer on " + unit.name + " → " + unit.atk + "/" + unit.hp + ".");
     render();
   }
 
@@ -714,7 +714,7 @@
     keep.hp = keep.maxHp;
     keep.name = "Veteran " + t.name;
     enemy[lane] = [keep];
-    notes.push("AI Fuse → " + keep.name + " in Lane " + (lane + 1));
+    notes.push("AI Promote → " + keep.name + " in Wall " + (lane + 1));
     return true;
   }
 
@@ -724,7 +724,7 @@
     u.atk += 1;
     u.maxHp += 1;
     u.hp += 1;
-    notes.push("AI Service (+1/+1) on Lane " + (lane + 1) + " " + u.name + " → " + u.atk + "/" + u.hp);
+    notes.push("AI Armorer (+1/+1) on Wall " + (lane + 1) + " " + u.name + " → " + u.atk + "/" + u.hp);
     return true;
   }
 
@@ -751,7 +751,7 @@
     );
     const aiCb = comebackGold(state.aiLossStreak | 0);
     let gold = nextShopGold(state.round, state.aiUnspent || 0) + aiCb;
-    if (aiCb) notes.push("AI comeback +" + aiCb + "g (" + state.aiLossStreak + " losses in a row).");
+    if (aiCb) notes.push("AI comeback +" + aiCb + "g (" + state.aiLossStreak + " loss" + (state.aiLossStreak===1?"":"es") + " in a row).");
     let serviced = false;
     let rolled = false;
     let guard = 12;
@@ -766,7 +766,7 @@
         const u = randomUnit(Math.min(gold - (empty.length - 1), shopCap()));
         enemy[lane].push(u);
         gold -= unitCost(u);
-        notes.push("AI buy → cover Lane " + (lane + 1) + " (" + unitCost(u) + "g).");
+        notes.push("AI buy → cover Wall " + (lane + 1) + " (" + unitCost(u) + "g).");
         continue;
       }
 
@@ -788,7 +788,7 @@
           if (unitCost(u) <= gold) {
             enemy[lane].push(u);
             gold -= unitCost(u);
-            notes.push("AI buy → stack Lane " + (lane + 1) + " (" + unitCost(u) + "g).");
+            notes.push("AI buy → stack Wall " + (lane + 1) + " (" + unitCost(u) + "g).");
             continue;
           }
         }
@@ -827,7 +827,7 @@
         const u = randomUnit(Math.min(gold, shopCap()));
         enemy[i].push(u);
         gold -= unitCost(u);
-        notes.push("AI safety cover Lane " + (i + 1) + ".");
+        notes.push("AI safety cover Wall " + (i + 1) + ".");
       }
     }
 
@@ -1077,7 +1077,7 @@
             ": " +
             prefix +
             u.name +
-            " Start → Shield on " +
+            " Start → Ward on " +
             who +
             "."
         );
@@ -1189,7 +1189,7 @@
             ": " +
             prefix +
             u.name +
-            " Start → Shield on both in bay."
+            " Start → Ward on both in wall."
         );
         return;
       }
@@ -1347,7 +1347,7 @@
 
     // Thu #3: remember the last trigger or keyword each side fired per lane, for the "why" line
     const swings = [{ you: null, enemy: null }, { you: null, enemy: null }, { you: null, enemy: null }];
-    const TRIG = /^Lane (\d): (enemy )?(.+?) (Start|Hurt|Faint|Venom|Double|Overkill) /;
+    const TRIG = /^Lane (\d): (enemy )?(.+?) (Start|Hurt|Faint|Venom|Poison|Double|Overkill|Shield|Ward) /;
     combatTap = (msg) => {
       const m = TRIG.exec(msg);
       if (m) swings[+m[1] - 1][m[2] ? "enemy" : "you"] = m[3] + " " + m[4];
@@ -1399,14 +1399,14 @@
           if (def.shield) {
             def.shield = false;
             dmg = 0;
-            swings[i][defSide] = def.name + " Shield";
-            log(L + att.name + " hits " + def.name + " — Shield blocks (0 dmg).");
+            swings[i][defSide] = def.name + " Ward";
+            log(L + att.name + " hits " + def.name + " — Ward blocks (0 dmg).");
           } else {
             def.hp -= dmg;
             log(L + att.name + " hits " + def.name + " for " + dmg + " → " + Math.max(0, def.hp) + " HP.");
             if (att.venom && dmg > 0 && def.hp > 0) {
               def.hp = 0;
-              log(L + pre + att.name + " Venom → " + def.name + " faints.");
+              log(L + pre + att.name + " Poison → " + def.name + " faints.");
             }
             if (att.overkill && def.hp < 0) {
               const left = -def.hp;
