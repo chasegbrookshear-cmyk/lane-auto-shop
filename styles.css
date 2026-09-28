@@ -1,7 +1,16 @@
 :root {
-  --bg: #0e1218; --panel: #1a2330; --ink: #e8eef6; --muted: #93a0b4;
-  --accent: #5b9cff; --good: #3ecf8e; --bad: #ff6b7a; --lane: #243044;
-  --radius: 12px; font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  --bg: #0c0a08;
+  --panel: #14110e;
+  --card: #231c16;
+  --offer: #2a2318;
+  --text: #f0e6d2;
+  --muted: #c4bfb4;
+  --accent: #d4a017;
+  --good: #6dbf7a;
+  --bad: #a84848;
+  --you: #4a6fa5;
+  --enemy: #a84848;
+  --border: #3a3228;
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-height: 100dvh; background: var(--bg); color: var(--ink); }
@@ -221,3 +230,31 @@ button.primary { background: var(--accent); color: #1a1206; }
   color: #f0c56a;
 }
 .comeback-line.hidden { display: none; }
+
+/* Keep Clash — torchlit keep (CSS/copy only) */
+body { background: var(--bg); color: var(--text); }
+#app { background: var(--panel); border: 1px solid var(--border); box-shadow: 0 0 0 1px #1a1510; }
+.gold-chip {
+  background: radial-gradient(circle at 30% 30%, #f0d060, var(--accent) 55%, #8a6808);
+  color: #1a1204; border: 1px solid #f0c56a; border-radius: 999px;
+}
+.offer {
+  background: var(--offer);
+  border: 1px solid #5a4a30;
+  box-shadow: inset 0 0 0 1px rgba(212,160,23,0.15);
+}
+.offer.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.unit {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.lane.mine { border-color: var(--you); }
+.lane.theirs { border-color: var(--enemy); }
+.board.enemy .lane { border-color: var(--enemy); }
+.chip { border-color: #5a4a30; color: #f0ebe0; background: #1a1510; }
+.chip-ward, .chip-shield { color: #9ec0ef; border-color: #4a6fa5; }
+.chip-poison, .chip-venom { color: #b8e09a; border-color: #5a8a40; }
+.primary { background: var(--accent); color: #1a1204; border-color: #f0c56a; }
+.hint, .rules { color: var(--muted); }
+h1, h2 { color: var(--text); letter-spacing: 0.02em; }
+.comeback-line { color: var(--accent); }
