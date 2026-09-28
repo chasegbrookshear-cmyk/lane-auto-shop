@@ -414,11 +414,14 @@
               '<button type="button" class="act" data-sell>Sell refund ' +
               unitCost(unit) +
               "g</button>" +
-              '<button type="button" class="act" data-svc' +
-              (state.gold < SERVICE ? " disabled" : "") +
-              ">Armorer " +
-              SERVICE +
-              "g</button></span>"
+              ((state.services || 0) < 1
+                ? '<button type="button" class="act" data-svc' +
+                  (state.gold < SERVICE ? " disabled" : "") +
+                  ">Armorer " +
+                  SERVICE +
+                  "g</button>"
+                : "") +
+              "</span>"
             : "");
         if (mine && state.phase === "shop") {
           u.style.cursor = "pointer";
@@ -433,10 +436,13 @@
             e.stopPropagation();
             sellUnit(i, slot);
           });
-          u.querySelector("[data-svc]").addEventListener("click", (e) => {
-            e.stopPropagation();
-            serviceUnit(i, slot);
-          });
+          const svcBtn = u.querySelector("[data-svc]");
+          if (svcBtn) {
+            svcBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              serviceUnit(i, slot);
+            });
+          }
         }
         wrap.appendChild(u);
       });
@@ -520,7 +526,7 @@
     if (!a) return;
     if (toSlot === undefined) {
       if (state.lanes[toLane].length >= CAP) {
-        log("Lane is full — tap a unit there to swap.");
+        log("Wall is full — tap a unit there to swap.");
         render();
         return;
       }
@@ -528,7 +534,7 @@
       state.lanes[toLane].push(a);
       tryAutoFuse(toLane);
       selectedUnit = null;
-      log("Moved " + a.name + " to Lane " + (toLane + 1) + ".");
+      log("Moved " + a.name + " to Wall " + (toLane + 1) + ".");
       render();
       return;
     }
@@ -539,8 +545,8 @@
     selectedUnit = null;
     log(
       from.lane === toLane
-        ? "Lane " + (toLane + 1) + ": swapped front/back."
-        : "Swapped " + a.name + " (Lane " + (from.lane + 1) + ") with " + dest.name + " (Lane " + (toLane + 1) + ").",
+        ? "Wall " + (toLane + 1) + ": swapped front/back."
+        : "Swapped " + a.name + " (Wall " + (from.lane + 1) + ") with " + dest.name + " (Wall " + (toLane + 1) + ").",
     );
     render();
   }
@@ -554,7 +560,7 @@
     }
     if (selectedOffer === null) return;
     if (state.lanes[i].length >= CAP) {
-      log("Lane " + (i + 1) + " is full (max " + CAP + ").");
+      log("Wall " + (i + 1) + " is full (max " + CAP + ").");
       render();
       return;
     }
@@ -575,7 +581,7 @@
       sessionStarted = true;
       ping("session_start");
     }
-    log("Bought " + offer.name + " into Lane " + (i + 1) + " (slot " + state.lanes[i].length + ").");
+    log("Bought " + offer.name + " into Wall " + (i + 1) + " (slot " + state.lanes[i].length + ").");
     render();
   }
 
@@ -598,7 +604,7 @@
     const stack = state.lanes[lane];
     if (!stack || stack.length < 2) return;
     state.lanes[lane] = [stack[1], stack[0]];
-    log("Lane " + (lane + 1) + ": swapped front/back.");
+    log("Wall " + (lane + 1) + ": swapped front/back.");
     render();
   }
 
@@ -903,12 +909,12 @@
 
     if (aim === "killer") {
       if (!killer || killer.hp <= 0) {
-        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no killer.");
+        log("Wall " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no killer.");
         return;
       }
       killer.hp -= 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -925,13 +931,13 @@
     if (aim === "enemy") {
       const foe = front(enemyBoard[laneIdx]);
       if (!foe) {
-        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no enemy front.");
+        log("Wall " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no enemy front.");
         return;
       }
       const dmg = unit.id === "snap" ? 2 : 1;
       foe.hp -= dmg;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -950,18 +956,18 @@
     if (aim === "adjacent") {
       const hit = adjacentFront(board, laneIdx);
       if (!hit) {
-        log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no adjacent ally.");
+        log("Wall " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no adjacent ally.");
         return;
       }
       if (unit.id === "spark") {
         hit.unit.atk += 1;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
             unit.name +
-            " Faint → +1 ATK Lane " +
+            " Faint → +1 ATK Wall " +
             (hit.lane + 1) +
             " " +
             hit.unit.name +
@@ -972,12 +978,12 @@
       } else {
         hit.unit.hp += 1;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
             unit.name +
-            " Faint → +1 HP Lane " +
+            " Faint → +1 HP Wall " +
             (hit.lane + 1) +
             " " +
             hit.unit.name +
@@ -992,13 +998,13 @@
     // partner (medic, crew, default)
     const ally = partnerOf(board[laneIdx], unit);
     if (!ally) {
-      log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no partner.");
+      log("Wall " + (laneIdx + 1) + ": " + prefix + unit.name + " Faint — no partner.");
       return;
     }
     if (unit.id === "crew") {
       ally.atk += 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -1014,7 +1020,7 @@
     const amt = unit.id === "medic" ? 2 : 1;
     ally.hp += amt;
     log(
-      "Lane " +
+      "Wall " +
         (laneIdx + 1) +
         ": " +
         prefix +
@@ -1043,7 +1049,7 @@
       if (u.id === "lug") {
         target.hp += 1;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1059,7 +1065,7 @@
       if (u.id === "wedge") {
         const moved = moveToFront(lane, u);
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1072,7 +1078,7 @@
       if (u.id === "hose") {
         target.shield = true;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1087,7 +1093,7 @@
         moveToFront(lane, u);
         target.hp += 1;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1103,7 +1109,7 @@
       if (u.id === "blink") {
         if (partner) {
           log(
-            "Lane " +
+            "Wall " +
               (laneIdx + 1) +
               ": " +
               prefix +
@@ -1115,7 +1121,7 @@
         u.atk += 1;
         u.hp += 1;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1131,7 +1137,7 @@
       if (u.id === "guard") {
         target.atk += 1;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1147,7 +1153,7 @@
       if (u.id === "anchor") {
         target.hp += 2;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1164,7 +1170,7 @@
         const amt = partner ? 2 : 1;
         target.atk += amt;
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1184,7 +1190,7 @@
           if (ally.hp > 0) ally.shield = true;
         });
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1196,7 +1202,7 @@
       if (u.id === "dolly") {
         if (lane.length >= CAP) {
           log(
-            "Lane " +
+            "Wall " +
               (laneIdx + 1) +
               ": " +
               prefix +
@@ -1213,7 +1219,7 @@
         lug.text = "1/1 spawn";
         lane.push(lug);
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1223,7 +1229,7 @@
         return;
       }
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -1242,7 +1248,7 @@
     if (hurter.id === "rag") {
       hurter.atk += 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -1257,7 +1263,7 @@
       const healed = partner || hurter;
       healed.hp += 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -1275,7 +1281,7 @@
     if (attacker && attacker.hp > 0) {
       attacker.hp -= 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -1292,7 +1298,7 @@
       const healed = partner || hurter;
       healed.hp += 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
@@ -1311,7 +1317,7 @@
       const hit = pickSplashTarget(laneIdx, enemyBoard);
       if (!hit) {
         log(
-          "Lane " +
+          "Wall " +
             (laneIdx + 1) +
             ": " +
             prefix +
@@ -1322,12 +1328,12 @@
       }
       hit.unit.hp -= 1;
       log(
-        "Lane " +
+        "Wall " +
           (laneIdx + 1) +
           ": " +
           prefix +
           hurter.name +
-          " Hurt splash → Lane " +
+          " Hurt splash → Wall " +
           (hit.lane + 1) +
           " " +
           hit.unit.name +
@@ -1347,7 +1353,7 @@
 
     // Thu #3: remember the last trigger or keyword each side fired per lane, for the "why" line
     const swings = [{ you: null, enemy: null }, { you: null, enemy: null }, { you: null, enemy: null }];
-    const TRIG = /^Lane (\d): (enemy )?(.+?) (Start|Hurt|Faint|Venom|Poison|Double|Overkill|Shield|Ward) /;
+    const TRIG = /^(?:Lane|Wall) (\d): (enemy )?(.+?) (Start|Hurt|Faint|Venom|Poison|Double|Overkill|Shield|Ward) /;
     combatTap = (msg) => {
       const m = TRIG.exec(msg);
       if (m) swings[+m[1] - 1][m[2] ? "enemy" : "you"] = m[3] + " " + m[4];
@@ -1367,10 +1373,10 @@
       if (unit.hp > 0 || fainted.indexOf(unit) >= 0) return;
       fainted.push(unit);
       const prefix = side === "you" ? "" : "enemy ";
-      log("Lane " + (laneIdx + 1) + ": " + prefix + unit.name + " faints.");
+      log("Wall " + (laneIdx + 1) + ": " + prefix + unit.name + " faints.");
       applyFaint(side, laneIdx, unit, boards, killer);
       const nxt = front(side === "you" ? boards.you[laneIdx] : boards.enemy[laneIdx]);
-      if (nxt) log("Lane " + (laneIdx + 1) + ": " + prefix + nxt.name + " steps up.");
+      if (nxt) log("Wall " + (laneIdx + 1) + ": " + prefix + nxt.name + " steps up.");
     }
     while (guard-- > 0) {
       let any = false;
@@ -1384,7 +1390,7 @@
         if (laneSteps[i] > LANE_STEP_CAP) {
           laneStalled[i] = true;
           log(
-            "Lane " +
+            "Wall " +
               (i + 1) +
               ": fight stalled after " +
               LANE_STEP_CAP +
@@ -1394,7 +1400,7 @@
         }
         function strike(att, def, attSide, defSide) {
           const pre = attSide === "you" ? "" : "enemy ";
-          const L = "Lane " + (i + 1) + ": ";
+          const L = "Wall " + (i + 1) + ": ";
           let dmg = att.atk;
           if (def.shield) {
             def.shield = false;
@@ -1414,7 +1420,7 @@
               const hit = pickSplashTarget(i, defBoard);
               if (hit) {
                 hit.unit.hp -= left;
-                log(L + pre + att.name + " Overkill → " + left + " to Lane " + (hit.lane + 1) + " " + hit.unit.name + " (" + Math.max(0, hit.unit.hp) + " HP).");
+                log(L + pre + att.name + " Overkill → " + left + " to Wall " + (hit.lane + 1) + " " + hit.unit.name + " (" + Math.max(0, hit.unit.hp) + " HP).");
                 if (hit.unit.hp > 0) applyHurt(hit.unit, defSide, hit.lane, att, boards, faintUnit);
                 faintUnit(defSide, hit.unit, hit.lane, att);
               } else {
@@ -1432,7 +1438,7 @@
           if (att.double && att.hp > 0) {
             const next = front(defSide === "you" ? boards.you[i] : boards.enemy[i]);
             if (next) {
-              log("Lane " + (i + 1) + ": " + (attSide === "you" ? "" : "enemy ") + att.name + " Double → second hit.");
+              log("Wall " + (i + 1) + ": " + (attSide === "you" ? "" : "enemy ") + att.name + " Double → second hit.");
               strike(att, next, attSide, defSide);
             }
           }
@@ -1483,26 +1489,26 @@
       const aEmpty = !boards.you[i].length;
       const bEmpty = !boards.enemy[i].length;
       if (aEmpty && bEmpty) {
-        log("Lane " + (i + 1) + ": empty draw.");
+        log("Wall " + (i + 1) + ": empty draw.");
       } else if (aAlive && !bAlive) {
         youLanes += 1;
-        log("Lane " + (i + 1) + ": YOU win. " + why(i, "you"), "win");
+        log("Wall " + (i + 1) + ": YOU win. " + why(i, "you"), "win");
       } else if (bAlive && !aAlive) {
         enemyLanes += 1;
-        log("Lane " + (i + 1) + ": AI wins. " + why(i, "enemy"), "loss");
+        log("Wall " + (i + 1) + ": AI wins. " + why(i, "enemy"), "loss");
       } else if (!aAlive && !bAlive) {
-        log("Lane " + (i + 1) + ": mutual wipe — draw. " + whyDraw(i));
+        log("Wall " + (i + 1) + ": mutual wipe — draw. " + whyDraw(i));
       } else {
         const ah = boards.you[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
         const bh = boards.enemy[i].reduce((s, u) => s + Math.max(0, u.hp), 0);
         if (ah > bh) {
           youLanes += 1;
-          log("Lane " + (i + 1) + ": YOU win on HP (" + ah + ">" + bh + "). " + why(i, "you"), "win");
+          log("Wall " + (i + 1) + ": YOU win on HP (" + ah + ">" + bh + "). " + why(i, "you"), "win");
         } else if (bh > ah) {
           enemyLanes += 1;
-          log("Lane " + (i + 1) + ": AI wins on HP (" + bh + ">" + ah + "). " + why(i, "enemy"), "loss");
+          log("Wall " + (i + 1) + ": AI wins on HP (" + bh + ">" + ah + "). " + why(i, "enemy"), "loss");
         } else {
-          log("Lane " + (i + 1) + ": draw on equal HP. " + whyDraw(i));
+          log("Wall " + (i + 1) + ": draw on equal HP. " + whyDraw(i));
         }
       }
     }
@@ -1545,7 +1551,7 @@
       const box = document.createElement("div");
       box.className = "spend-lane";
       box.innerHTML =
-        '<div class="title">Lane ' +
+        '<div class="title">Wall ' +
         (i + 1) +
         " — you " +
         youN +
@@ -1596,6 +1602,7 @@
 
     const { youLanes, enemyLanes } = resolveCombat(state.lastYou, state.lastEnemy);
     const roundWin = youLanes >= 2;
+    const roundLoss = enemyLanes >= 2;
     if (roundWin) {
       state.wins += 1;
       state.lossStreak = 0;
@@ -1604,7 +1611,7 @@
         "Round " + state.round + ": you take it " + youLanes + "–" + enemyLanes + ".",
         "win"
       );
-    } else {
+    } else if (roundLoss) {
       state.losses += 1;
       state.lossStreak = (state.lossStreak | 0) + 1;
       state.aiLossStreak = 0;
@@ -1617,6 +1624,18 @@
           youLanes +
           ".",
         "loss"
+      );
+    } else {
+      // Split / under-2 (e.g. 1–1–draw): nobody gets the round
+      log(
+        "Round " +
+          state.round +
+          ": split " +
+          youLanes +
+          "–" +
+          enemyLanes +
+          " — nobody takes it.",
+        ""
       );
     }
     // Lanes AI lost this round (for next shop stack targeting)
