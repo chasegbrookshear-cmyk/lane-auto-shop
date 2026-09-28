@@ -198,3 +198,18 @@ button.primary { background: var(--accent); color: #1a1206; }
   display: block; margin: 0 0 4px; font-size: 0.68rem; font-weight: 800;
   letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent);
 }
+
+/* Thu-PM #3: readability */
+:root { --muted: #c4bfb4; }
+.offer .meta, .unit .meta, .hint, .gold-math, .bank-warn, .lane .tag, .log {
+  color: var(--muted);
+}
+.log {
+  max-height: 320px; font-size: 0.92rem; line-height: 1.45;
+  color: #d8d3c8; border: 1px solid #2c3240;
+}
+.log .kw { color: #f0c56a; }
+.log .win { color: var(--good); }
+.log .loss { color: #f08a94; }
+.chip { border-color: #5a6070; color: #f0ebe0; }
+.chip-start, .chip-hurt, .chip-faint { color: #d0cbbf; border-color: #5a6070; }
