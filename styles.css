@@ -213,3 +213,11 @@ button.primary { background: var(--accent); color: #1a1206; }
 .log .kw { color: #f0c56a; } /* after win/loss so keyword tint wins */
 .chip { border-color: #5a6070; color: #f0ebe0; }
 .chip-start, .chip-hurt, .chip-faint { color: #d0cbbf; border-color: #5a6070; }
+
+.comeback-line {
+  flex-basis: 100%;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #f0c56a;
+}
+.comeback-line.hidden { display: none; }
