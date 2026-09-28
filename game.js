@@ -1306,6 +1306,10 @@
       applyStartBuff(boards.enemy[i], i, "enemy ");
     }
 
+    // Cut Thu-PM #1: per-lane step cap. Drip/Ragman Hurt can heal forever vs 1-dmg fronts.
+    const LANE_STEP_CAP = 24;
+    const laneSteps = [0, 0, 0];
+    const laneStalled = [false, false, false];
     let guard = 80;
     const fainted = [];
     function faintUnit(side, unit, laneIdx, killer) {
@@ -1320,11 +1324,23 @@
     while (guard-- > 0) {
       let any = false;
       for (let i = 0; i < 3; i++) {
+        if (laneStalled[i]) continue;
         const a = front(boards.you[i]);
         const b = front(boards.enemy[i]);
         if (!a || !b) continue;
         any = true;
-
+        laneSteps[i] += 1;
+        if (laneSteps[i] > LANE_STEP_CAP) {
+          laneStalled[i] = true;
+          log(
+            "Lane " +
+              (i + 1) +
+              ": fight stalled after " +
+              LANE_STEP_CAP +
+              " steps — draw."
+          );
+          continue;
+        }
         function strike(att, def, attSide, defSide) {
           const pre = attSide === "you" ? "" : "enemy ";
           const L = "Lane " + (i + 1) + ": ";
@@ -1407,6 +1423,10 @@
     let youLanes = 0;
     let enemyLanes = 0;
     for (let i = 0; i < 3; i++) {
+      if (laneStalled[i]) {
+        // Cap already logged the stall draw; don't award the lane.
+        continue;
+      }
       const aAlive = boards.you[i].some((u) => u.hp > 0);
       const bAlive = boards.enemy[i].some((u) => u.hp > 0);
       const aEmpty = !boards.you[i].length;
