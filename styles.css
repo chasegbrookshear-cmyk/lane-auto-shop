@@ -179,3 +179,22 @@ button.primary { background: var(--accent); color: #1a1206; }
 .tip { background: #1b1810; border-color: var(--accent); }
 .tip button { background: var(--accent); color: #1a1206; }
 #end-screen { border-color: var(--accent); background: var(--panel); }
+
+/* Thu-PM #2: placement preview on full board */
+.lane.replace-mode { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(232,168,56,0.45); }
+.lane.replace-mode .preview-hint {
+  display: inline; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 0.65rem; letter-spacing: 0.04em; text-transform: none;
+  background: rgba(232,168,56,0.18); color: var(--accent); border: 1px solid rgba(232,168,56,0.45);
+}
+.unit.replace-target {
+  position: relative; border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(232,168,56,0.35); cursor: pointer;
+}
+.unit.replace-target:hover, .unit.replace-target:focus {
+  background: #2a2416; box-shadow: 0 0 0 2px rgba(232,168,56,0.7);
+}
+.replace-badge {
+  display: block; margin: 0 0 4px; font-size: 0.68rem; font-weight: 800;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent);
+}
