@@ -306,7 +306,11 @@
     }
 
     el.log.innerHTML = state.log
-      .map((l) => '<div class="' + (l.cls || "") + '">' + l.msg + "</div>")
+      .map((l) => {
+        const kw = /\b(Shield|Venom|Double|Overkill|Start|Hurt|Faint)\b/.test(l.msg);
+        const cls = ((l.cls || "") + (kw ? " kw" : "")).trim();
+        return '<div class="' + cls + '">' + l.msg + "</div>";
+      })
       .join("");
     el.log.scrollTop = el.log.scrollHeight;
   }
