@@ -313,12 +313,24 @@
 
   function laneEl(i, stack, mine) {
     const div = document.createElement("div");
-    const canDrop =
+    const canPlace =
       mine &&
       state.phase === "shop" &&
-      ((selectedOffer !== null && stack.length < CAP) ||
-        (selectedUnit && selectedUnit.lane !== i));
-    div.className = "lane" + (mine ? " mine" : " theirs") + (canDrop ? " drop" : "");
+      selectedOffer !== null &&
+      stack.length < CAP;
+    const canReplace =
+      mine &&
+      state.phase === "shop" &&
+      selectedOffer !== null &&
+      stack.length >= CAP;
+    const canDrop =
+      canPlace ||
+      (mine && state.phase === "shop" && selectedUnit && selectedUnit.lane !== i);
+    div.className =
+      "lane" +
+      (mine ? " mine" : " theirs") +
+      (canDrop ? " drop" : "") +
+      (canReplace ? " replace-mode" : "");
     div.innerHTML =
       '<div class="tag">' + (mine ? "Bay " : "Lane ") +
       (i + 1) +
@@ -332,6 +344,7 @@
       (mine && state.phase === "shop" && canFuseLane(stack)
         ? ' <button type="button" class="swap fuse" data-fuse="' + i + '">Fuse</button>'
         : "") +
+      (canReplace ? ' <span class="preview-hint">tap a unit to replace · buy → Back</span>' : "") +
       "</div>";
     const wrap = document.createElement("div");
     wrap.className = "stack";
@@ -347,8 +360,15 @@
     } else {
       stack.forEach((unit, slot) => {
         const u = document.createElement("div");
-        u.className = "unit" + (slot === 0 ? " front" : "") + (unit.veteran ? " vet" : "");
+        u.className =
+          "unit" +
+          (slot === 0 ? " front" : "") +
+          (unit.veteran ? " vet" : "") +
+          (canReplace ? " replace-target" : "");
         u.innerHTML =
+          (canReplace
+            ? '<span class="replace-badge">Replace · buy lands Back</span>'
+            : "") +
           '<span class="name">' +
           (slot === 0 ? "Front · " : "Back · ") +
           unit.name +
