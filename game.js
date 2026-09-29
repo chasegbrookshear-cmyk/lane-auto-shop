@@ -42,6 +42,7 @@
     gold: document.getElementById("gold"),
     goldMath: document.getElementById("gold-math"),
     comeback: document.getElementById("comeback"),
+    theirComeback: document.getElementById("their-comeback"),
     bankWarn: document.getElementById("bank-warn"),
     round: document.getElementById("round"),
     record: document.getElementById("record"),
@@ -260,6 +261,19 @@
       } else {
         el.comeback.textContent = "";
         el.comeback.className = "comeback-line hidden";
+      }
+    }
+    // Cut Tue #2: AI comeback on the HUD — same value buildEnemy adds at End Turn (aiLossStreak is only updated after the fight)
+    if (el.theirComeback) {
+      const st = state.aiLossStreak | 0;
+      const cb = state.round > 1 ? comebackGold(st) : 0;
+      if (cb > 0 && state.phase === "shop") {
+        el.theirComeback.textContent =
+          "Their comeback +" + cb + "g (" + st + " loss" + (st === 1 ? "" : "es") + " in a row).";
+        el.theirComeback.className = "comeback-line their-comeback";
+      } else {
+        el.theirComeback.textContent = "";
+        el.theirComeback.className = "comeback-line their-comeback hidden";
       }
     }
     if (!el.bankWarn) return;
