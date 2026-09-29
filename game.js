@@ -55,6 +55,7 @@
     shop: document.getElementById("shop-screen"),
     spendWrap: document.getElementById("spend-wrap"),
     spendMap: document.getElementById("spend-map"),
+    spendSummary: document.getElementById("spend-summary"),
     btnRoll: document.getElementById("btn-roll"),
     btnEnd: document.getElementById("btn-end"),
     btnNext: document.getElementById("btn-next"),
@@ -1541,13 +1542,18 @@
     return (stack || []).reduce((n, u) => n + unitCost(u), 0);
   }
 
+  // Cut Tue #1: spend map lives in the shop as a collapsed panel (no Next-shop gate)
   function showSpendMap() {
     el.spendMap.innerHTML = "";
+    let youTotal = 0;
+    let enTotal = 0;
     for (let i = 0; i < 3; i++) {
       const youN = state.lastYou[i].length;
       const enN = state.lastEnemy[i].length;
       const youG = laneSpend(state.lastYou[i]);
       const enG = laneSpend(state.lastEnemy[i]);
+      youTotal += youG;
+      enTotal += enG;
       const box = document.createElement("div");
       box.className = "spend-lane";
       box.innerHTML =
@@ -1562,14 +1568,18 @@
         " (" +
         enG +
         "g)</div>" +
-        '<div class="spend-cols"><div><div class="side">You</div>' +
+        '<div class="spend-cols"><div><div class="side">Your Keep</div>' +
         unitListHtml(state.lastYou[i]) +
-        '</div><div><div class="side">Opponent</div>' +
+        '</div><div><div class="side">Their Keep</div>' +
         unitListHtml(state.lastEnemy[i]) +
         "</div></div>";
       el.spendMap.appendChild(box);
     }
-    if (el.btnNext) el.btnNext.classList.remove("hidden");
+    if (el.spendSummary) {
+      el.spendSummary.textContent =
+        "Last round (R" + state.round + "): their spend " + enTotal + "g · yours " + youTotal + "g";
+    }
+    el.spendWrap.open = false;
     el.spendWrap.classList.remove("hidden");
   }
 
@@ -1655,9 +1665,9 @@
       showEnd(false, "Run over " + state.wins + "–" + state.losses + ".");
       return;
     }
-    state.phase = "reveal";
+    // Cut Tue #1: no reveal gate — spend map goes into the shop panel, next shop opens now
     showSpendMap();
-    render();
+    nextShop();
   }
 
   function reckonAiLostLanes(youSnap, enemySnap) {
@@ -1671,8 +1681,7 @@
     return lost;
   }
 
-  function afterReveal() {
-    el.spendWrap.classList.add("hidden");
+  function nextShop() {
     if (state.wins >= 6) {
       showEnd(true, "You won the run " + state.wins + "–" + state.losses + ".");
       return;
@@ -1724,7 +1733,6 @@
 
   el.btnRoll.addEventListener("click", doRoll);
   el.btnEnd.addEventListener("click", endTurnFight);
-  el.btnNext.addEventListener("click", afterReveal);
   el.btnRematch.addEventListener("click", startRun);
   if (el.btnTipDismiss && el.tip) {
     try {
