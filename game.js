@@ -440,7 +440,10 @@
                   ">Armorer " +
                   armorerPrice(state.services) +
                   "g</button>"
-                : "") +
+                : // sink2: keep the button in place after 4/4 (disabled) so nothing shifts under the cursor
+                  '<button type="button" class="act" data-svc disabled>Armorer ' +
+                  ARMORER_MAX + "/" + ARMORER_MAX +
+                  "</button>") +
               "</span>"
             : "");
         if (mine && state.phase === "shop") {

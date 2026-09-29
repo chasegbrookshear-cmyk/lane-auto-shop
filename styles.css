@@ -279,3 +279,9 @@ h1, h2 { color: var(--text); letter-spacing: 0.02em; }
   box-shadow: inset 0 0 0 1px #f7d77e, 0 0 0 1px #8f6a06, 0 2px 12px rgba(226,174,31,0.45);
 }
 #btn-rematch:hover { filter: brightness(1.06); }
+
+/* sink2: keep Sell/Armorer from shifting under the cursor. The End Turn gold line wraps 1<->2 lines
+   (or hides at 0g) as gold changes, which moved the whole board 17-25px; reserve 2 lines and keep it in flow. */
+#bank-warn { min-height: 2.45em; min-height: 2lh; }
+#bank-warn.hidden { display: block !important; visibility: hidden; }
+.unit-acts .act[data-svc] { min-width: 9.5em; } /* all labels (2g..5g, 4/4) render the same width */
