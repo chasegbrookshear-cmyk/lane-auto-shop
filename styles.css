@@ -204,3 +204,21 @@ h1, h2 { color: var(--text); letter-spacing: 0.02em; }
   font-weight: 700;
 }
 #btn-roll:disabled { opacity: 0.5; }
+
+/* Cut Tue #1: last-round spend panel inside the shop (collapsed by default) */
+.spend-wrap {
+  margin: 4px 0 10px; padding: 0; background: var(--card);
+  border: 1px solid #5a4a30; border-left: 3px solid var(--accent);
+  border-radius: 10px;
+}
+.spend-wrap > summary {
+  cursor: pointer; padding: 10px 12px; font-weight: 700; font-size: 0.9rem;
+  color: var(--accent); list-style: none;
+}
+.spend-wrap > summary::-webkit-details-marker { display: none; }
+.spend-wrap > summary::before { content: "▸ "; }
+.spend-wrap[open] > summary::before { content: "▾ "; }
+.spend-wrap[open] > summary { border-bottom: 1px solid var(--border); }
+.spend-wrap .spend-map { padding: 10px 12px 2px; }
+.spend-wrap .spend-lane { background: var(--panel); border-color: var(--border); }
+.spend-wrap .spend-lane .title { color: var(--text); }
