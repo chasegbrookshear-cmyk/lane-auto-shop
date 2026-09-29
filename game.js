@@ -32,7 +32,12 @@
 
   const BUY = 3;
   const ROLL = 1;
-  const SERVICE = 3;
+  // Sink1: repeatable Armorer — 2/3/4/5g per shop (resets each shop), max 4 uses
+  const ARMORER_BASE = 2;
+  const ARMORER_MAX = 4;
+  function armorerPrice(usesSoFar) {
+    return ARMORER_BASE + (usesSoFar | 0);
+  }
   const START_GOLD = 6;
   const CAP = 2;
   const VET_ATK = 1;
@@ -429,11 +434,11 @@
               '<button type="button" class="act" data-sell>Sell refund ' +
               unitCost(unit) +
               "g</button>" +
-              ((state.services || 0) < 1
+              ((state.services || 0) < ARMORER_MAX
                 ? '<button type="button" class="act" data-svc' +
-                  (state.gold < SERVICE ? " disabled" : "") +
+                  (state.gold < armorerPrice(state.services) ? " disabled" : "") +
                   ">Armorer " +
-                  SERVICE +
+                  armorerPrice(state.services) +
                   "g</button>"
                 : "") +
               "</span>"
@@ -665,22 +670,29 @@
     if (state.phase !== "shop") return;
     const unit = state.lanes[lane][slot];
     if (!unit) return;
-    if ((state.services || 0) >= 1) {
-      log("Armorer is once per shop.");
+    const used = state.services || 0;
+    if (used >= ARMORER_MAX) {
+      log("Armorer is maxed (" + ARMORER_MAX + "/" + ARMORER_MAX + " used this shop).");
       render();
       return;
     }
-    if (state.gold < SERVICE) {
-      log("Not enough gold for Armorer.");
+    const price = armorerPrice(used);
+    if (state.gold < price) {
+      log("Not enough gold for Armorer (" + price + "g).");
       render();
       return;
     }
-    state.gold -= SERVICE;
-    state.services = (state.services || 0) + 1;
+    state.gold -= price;
+    state.services = used + 1;
     unit.atk += 1;
     unit.maxHp += 1;
     unit.hp += 1;
-    log("Armorer on " + unit.name + " → " + unit.atk + "/" + unit.hp + ".");
+    log(
+      "Armorer on " + unit.name + " → " + unit.atk + "/" + unit.hp +
+        (state.services < ARMORER_MAX
+          ? " (use " + state.services + "/" + ARMORER_MAX + ", next " + armorerPrice(state.services) + "g)."
+          : " (" + ARMORER_MAX + "/" + ARMORER_MAX + " used this shop).")
+    );
     render();
   }
 
@@ -739,13 +751,13 @@
     return true;
   }
 
-  function aiServiceFront(enemy, lane, notes) {
+  function aiServiceFront(enemy, lane, notes, price, useNo) {
     const u = enemy[lane][0];
     if (!u) return false;
     u.atk += 1;
     u.maxHp += 1;
     u.hp += 1;
-    notes.push("AI Armorer (+1/+1) on Wall " + (lane + 1) + " " + u.name + " → " + u.atk + "/" + u.hp);
+    notes.push("AI Armorer (+1/+1, " + price + "g, use " + useNo + "/" + ARMORER_MAX + ") on Wall " + (lane + 1) + " " + u.name + " → " + u.atk + "/" + u.hp);
     return true;
   }
 
@@ -774,6 +786,7 @@
     let gold = nextShopGold(state.round, state.aiUnspent || 0) + aiCb;
     if (aiCb) notes.push("AI comeback +" + aiCb + "g (" + state.aiLossStreak + " loss" + (state.aiLossStreak===1?"":"es") + " in a row).");
     let serviced = false;
+    let aiUses = 0;
     let rolled = false;
     let guard = 12;
 
@@ -791,11 +804,13 @@
         continue;
       }
 
-      // 2) Service once if covered
-      if (covered && !serviced && gold >= SERVICE) {
+      // 2) First Armorer if covered (2g, weakest front)
+      if (covered && !serviced && gold >= armorerPrice(aiUses)) {
         const lane = weakestFrontLane(enemy);
-        if (lane >= 0 && aiServiceFront(enemy, lane, notes)) {
-          gold -= SERVICE;
+        const price = armorerPrice(aiUses);
+        if (lane >= 0 && aiServiceFront(enemy, lane, notes, price, aiUses + 1)) {
+          gold -= price;
+          aiUses += 1;
           serviced = true;
           continue;
         }
@@ -850,6 +865,19 @@
         gold -= unitCost(u);
         notes.push("AI safety cover Wall " + (i + 1) + ".");
       }
+    }
+
+    // Sink1: leftover gold into remaining Armorer uses, weakest front first (recomputed each use)
+    while (
+      [0, 1, 2].every((i) => enemy[i].length > 0) &&
+      aiUses < ARMORER_MAX &&
+      gold >= armorerPrice(aiUses)
+    ) {
+      const lane = weakestFrontLane(enemy);
+      const price = armorerPrice(aiUses);
+      if (lane < 0 || !aiServiceFront(enemy, lane, notes, price, aiUses + 1)) break;
+      gold -= price;
+      aiUses += 1;
     }
 
     state.aiUnspent = Math.max(0, gold);
