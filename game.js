@@ -332,7 +332,7 @@
     el.btnRoll.disabled = state.phase !== "shop" || state.gold < ROLL;
     const holes = state.lanes.filter((l) => !l.length).length;
     el.btnEnd.disabled = state.phase !== "shop" || placed < 1 || (state.round === 1 && holes > 0);
-    el.btnEnd.title = state.round === 1 && holes > 0 ? "Cover all 3 lanes before the first fight" : placed < 1 ? "Place at least 1 unit before fighting" : "";
+    el.btnEnd.title = state.round === 1 && holes > 0 ? "Cover all 3 walls before the first fight" : placed < 1 ? "Place at least 1 unit before fighting" : "";
 
     el.board.innerHTML = "";
     el.enemy.innerHTML = "";
@@ -1605,7 +1605,7 @@
       return;
     }
     if (state.round === 1 && state.lanes.some((l) => !l.length)) {
-      log("Cover all 3 lanes before the first fight.");
+      log("Cover all 3 walls before the first fight.");
       render();
       return;
     }
@@ -1617,8 +1617,8 @@
     log("— Round " + state.round + " fight —");
     (state.aiNotes || []).forEach((n) => log(n));
     log(
-      "AI board: " +
-        state.enemy.map((l, i) => "L" + (i + 1) + "=" + l.length).join(" ") +
+      "Their Keep: " +
+        state.enemy.map((l, i) => "W" + (i + 1) + "=" + l.length).join(" ") +
         "."
     );
     el.shop.classList.add("hidden");
