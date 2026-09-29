@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Keep Clash</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪙</text></svg>" />
-  <link rel="stylesheet" href="styles.css?v=polish1" />
+  <link rel="stylesheet" href="styles.css?v=tue1" />
 </head>
 <body>
   <div id="app">
@@ -35,6 +35,10 @@
         <button type="button" id="btn-end" class="primary">End Turn → Fight</button>
       </div>
       <p id="bank-warn" class="bank-warn hidden"></p>
+      <details id="spend-wrap" class="spend-wrap hidden">
+        <summary id="spend-summary">Last round: their spend</summary>
+        <div id="spend-map" class="spend-map"></div>
+      </details>
       <p class="hint">Buy at the printed cost, tap a wall. Tap a unit, then a wall to move (or another unit to swap). Higher ATK front strikes first. Copies Promote. Empty walls lose.</p>
     </section>
 
@@ -43,12 +47,6 @@
       <div id="board" class="board"></div>
       <h2>Their Keep</h2>
       <div id="enemy" class="board enemy"></div>
-    </section>
-
-    <section id="spend-wrap" class="spend-wrap hidden">
-      <h2>Spend map — where power went</h2>
-      <div id="spend-map" class="spend-map"></div>
-      <button type="button" id="btn-next" class="primary">Next shop</button>
     </section>
 
     <section class="log-wrap">
@@ -62,6 +60,6 @@
       <button type="button" id="btn-rematch" class="primary">New run / Rematch</button>
     </section>
   </div>
-  <script src="game.js?v=polish1"></script>
+  <script src="game.js?v=tue1"></script>
 </body>
 </html>
