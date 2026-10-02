@@ -79,8 +79,8 @@
   function ping(key) {
     try {
       const url = "https://abacus.jasoncameron.dev/hit/ship-lab-las/" + encodeURIComponent(key);
-      if (navigator.sendBeacon) navigator.sendBeacon(url);
-      else fetch(url, { mode: "no-cors", keepalive: true }).catch(() => {});
+      // ping1: abacus only counts GET /hit, so always send a GET (beacons are POSTs and were never counted)
+      fetch(url, { method: "GET", mode: "no-cors", keepalive: true, cache: "no-store" }).catch(() => {});
     } catch (_) {}
   }
 
@@ -1778,7 +1778,10 @@
 
   el.btnRoll.addEventListener("click", doRoll);
   el.btnEnd.addEventListener("click", endTurnFight);
-  el.btnRematch.addEventListener("click", startRun);
+  el.btnRematch.addEventListener("click", () => {
+    ping("rematch");
+    startRun();
+  });
   if (el.btnTipDismiss && el.tip) {
     try {
       if (localStorage.getItem("las-tip-dismissed") === "1") el.tip.classList.add("hidden");
